@@ -1,0 +1,89 @@
+<view class="wrap" wx:if="{{space}}">
+  <view class="head">{{space.name}} · {{space.w}}×{{space.d}}×{{space.h}} cm　门:{{doorName}} 窗:{{winName}}</view>
+
+  <!-- ===== 效果图：选风格 → 上传现场照片 → 确认生成 → 下载 ===== -->
+  <view class="view card">
+    <view class="qh">空间效果图（AI 翻新）</view>
+    <block wx:if="{{hasApi}}">
+      <view class="qh2">1. 选择翻新风格</view>
+      <view class="styles">
+        <view wx:for="{{styles}}" wx:key="id" class="style {{selStyle===item.id?'on':''}}" data-id="{{item.id}}" bindtap="chooseStyle">{{item.name}}</view>
+      </view>
+
+      <block wx:if="{{selStyle}}">
+        <view class="qh2">2. 上传现场全景照片</view>
+        <view class="photoBox" bindtap="capturePhoto">
+          <image wx:if="{{photoPath}}" src="{{photoPath}}" mode="aspectFill" class="photoImg"/>
+          <view wx:else class="photoEmpty">＋ 上传现场全局照片（1 张）</view>
+        </view>
+
+        <view class="payNote">
+          <block wx:if="{{quotaInfo.totalLeft > 0}}">可用 <text class="num">{{quotaInfo.totalLeft}}</text> 张<text wx:if="{{quotaInfo.balance > 0}}">（套餐余额）</text></block>
+          <block wx:else>效果图按张购买 · 6.99 元 / 5 张起</block>
+          <text class="buyLink" bindtap="openPaySheet">{{quotaInfo.totalLeft > 0 ? '加购' : '看价格'}}</text>
+        </view>
+        <button class="btn renderBtn" loading="{{rendering}}" bindtap="genRender">{{renderUrl?'重新生成':(rendering?'生成中…':(genHint?genHint:(noQuota?(payReady?'购买后生成':'预约效果图'):'开始生成')))}}</button>
+      </block>
+
+      <view class="renderBox">
+        <image wx:if="{{renderUrl}}" src="{{renderUrl}}" mode="aspectFill" class="renderImg"/>
+        <image wx:elif="{{noQuota && demoImg}}" src="{{demoImg}}" mode="aspectFill" class="renderImg demo"/>
+        <view wx:else class="renderEmpty">{{rendering?'生成中（约 15~60 秒，请勿退出）':'选好风格与照片后点下方按钮'}}</view>
+      </view>
+      <view wx:if="{{noQuota && demoImg && !renderUrl}}" class="demoTag">同类空间效果示例 · 购买后可生成您家专属效果图</view>
+      <view wx:if="{{renderErr}}" class="hint rerr">{{renderErr}}</view>
+      <view wx:if="{{renderUrl}}" class="btnRow">
+        <button class="btn saveBtn" bindtap="saveRender">下载到手机相册</button>
+        <button class="btn saveBtn" bindtap="previewRender">预览大图</button>
+      </view>
+      <view wx:if="{{renderUrl}}" class="saveTip">效果图仅保留 24 小时，请及时下载到手机相册</view>
+      <view wx:if="{{renders.length}}" class="galLine" bindtap="goGallery">查看我的效果图相册（{{renders.length}} 张）›</view>
+      <view wx:if="{{renders.length > 1}}" class="album">
+        <scroll-view scroll-x class="albumScroll">
+          <view wx:for="{{renders}}" wx:key="ts" class="athumb {{renderUrl===item.url?'on':''}}" data-url="{{item.url}}" bindtap="tapRender">
+            <image src="{{item.url}}" mode="aspectFill" class="athumbImg"/>
+          </view>
+        </scroll-view>
+        <text class="albumTip">共 {{renders.length}} 张 · 点缩略图切换主图</text>
+      </view>
+    </block>
+    <view wx:else class="hint soon">✨ AI 效果图功能即将上线，敬请期待（需配置生图服务）</view>
+  </view>
+
+  <button class="shareBtn" open-type="share">分享给好友 / 朋友圈</button>
+
+  <view class="btnRow">
+    <button class="btn totalBtn" bindtap="toSummary">查看总预算（多空间汇总）</button>
+    <button class="btn back" bindtap="back">返回</button>
+  </view>
+</view>
+
+<!-- 未注册拦截遮罩：进入报价页要求先注册，注册后完整展示预算 -->
+<view wx:if="{{space && !registered}}" class="regMask">
+  <view class="regCard">
+    <view class="regTitle">查看完整预算需先注册</view>
+    <view class="regTip">留个手机号，即可保存预算与效果图，并安排本地师傅免费上门测量</view>
+    <button class="btn" bindtap="goRegister">获取完整报价</button>
+  </view>
+</view>
+
+<view wx:else class="wrap"><view class="head">暂无数据，请先录入空间</view></view>
+
+<!-- 效果图套餐面板（每日免费额度用完后弹出） -->
+<view wx:if="{{paySheet}}" class="payMask" catchtap="closePaySheet">
+  <view class="paySheet" catchtap="noopPay">
+    <view class="psTitle">{{payReady ? '选择效果图套餐' : '效果图即将开放'}}</view>
+    <view class="psSub">{{payReady ? '购买后即可生成，套餐余额长期有效。' : '支付通道正在开通中，现在还不能购买。选定套餐表示你的意向，开通后会在小程序内公告。'}}</view>
+    <view class="packs">
+      <view wx:for="{{packs}}" wx:key="id" class="pack {{item.tag ? 'hot' : ''}}" data-id="{{item.id}}" bindtap="buyPack">
+        <view wx:if="{{item.tag}}" class="packTag">{{item.tag}}</view>
+        <view class="packTitle">{{item.title}}</view>
+        <view class="packPer">{{item.per}}</view>
+      </view>
+    </view>
+    <view class="psClose" bindtap="closePaySheet">以后再说</view>
+  </view>
+</view>
+
+<!-- 导出带品牌角标的效果图用（移出可视区，不可见） -->
+<canvas type="2d" id="stampCanvas" class="stampCv" style="width:{{stampW}}px;height:{{stampH}}px;"></canvas>

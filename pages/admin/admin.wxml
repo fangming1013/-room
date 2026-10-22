@@ -1,0 +1,179 @@
+<view class="wrap">
+  <view class="head">后台 · 完善价格与项目</view>
+
+  <block wx:if="{{!logged}}">
+    <view class="card">
+      <view class="row"><text class="lbl">管理员口令</text><input class="inp" password value="{{token}}" bindinput="onToken" placeholder="演示口令 admin123"/></view>
+      <button class="btn ok" bindtap="login">登录</button>
+      <view wx:if="{{msg}}" class="msg">{{msg}}</view>
+    </view>
+  </block>
+
+  <block wx:else>
+    <!-- 客资台：业主授权手机号后自动落库，24 小时内回访 -->
+    <view class="card">
+      <view class="ct">客资（{{leadCount}} 条 · 今日 {{leadToday}}）</view>
+      <view class="sub">业主在小程序算完价、授权手机号后自动进这里。越早回访意向越强，建议 24 小时内联系。</view>
+      <view wx:if="{{payIntentCount>0}}" class="payIntent">效果图付费意向：{{payIntentCount}} 次点击<text wx:if="{{payIntentText}}">（最近选 {{payIntentText}}）</text></view>
+      <view wx:if="{{leads.length===0}}" class="sub">还没有客资。把小程序分享给业主，算完价留电话就会出现在这里。</view>
+      <view wx:for="{{leads}}" wx:key="id" class="lead">
+        <view class="leadTop">
+          <text class="leadName">{{item.name}}</text>
+          <text class="leadPhone">{{item.phone}}</text>
+          <text class="leadTime">{{item.timeText}}</text>
+        </view>
+        <view class="leadMeta">{{item.cityText}} · {{item.typeText}} · {{item.areaText}} · {{item.spaceCount}} 个空间 · 预算 ¥{{item.budget}}</view>
+        <view class="leadAct">
+          <view class="btn sm ok" data-phone="{{item.phone}}" bindtap="callLead">拨打</view>
+          <view class="btn sm" data-phone="{{item.phone}}" bindtap="copyLead">复制号码</view>
+          <view class="btn sm no" data-id="{{item.id}}" bindtap="delLead">删除</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 材料商审核：费用到账 + 资料完整 才上架 -->
+    <view class="card">
+      <view class="ct">材料商审核（费用到账 + 资料完整方可上架）</view>
+      <view wx:if="{{pending.length===0}}" class="sub">暂无待审核品牌。</view>
+      <view wx:for="{{pending}}" wx:key="id" class="brandRev">
+        <view class="br1"><text class="brn">{{item.supplier}}</text><text class="brf">{{item.feePlan}}</text></view>
+        <view class="br2">联系人 {{item.contact}} · {{item.phone}} · 产品 {{item.productCount}} 款</view>
+        <view class="br2"><text class="{{item.paid ? 'paidOn' : 'paidOff'}}">{{item.payText}}</text></view>
+        <view wx:if="{{item.qrCode}}" class="brqr"><image src="{{item.qrCode}}" mode="aspectFill" class="brqrImg"/></view>
+        <view wx:if="{{item.products.length}}" class="br3">{{item.products}}</view>
+        <view class="brAct">
+          <view class="btn sm ok" data-id="{{item.id}}" bindtap="approveBrandAct">通过并上架</view>
+          <view class="btn sm no" data-id="{{item.id}}" bindtap="rejectBrandAct">驳回</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 生图 API（效果图快速模式；与价格数据隔离，存本机 storage） -->
+    <view class="card">
+      <view class="ct">生图 API（效果图真实生成 · 豆包 Seedream）</view>
+      <view class="sub">效果图默认走「豆包 Seedream 5.0 pro」：火山方舟控制台 console.volcengine.com/ark → 开通 Doubao-Seedream-5.0-pro → 创建 API Key，填到下面即可直连。模型名留空用 doubao-seedream-5-0-pro-260628；若报模型不存在，把方舟模型详情里复制的完整 ID 填进「模型名」。注意：Seedance 是视频模型、Seed3D 是 3D 模型，不能用于效果图。Key 只存本机。</view>
+      <view class="row"><text class="lbl">API Key</text><input class="inp" password value="{{apiCfg.apiKey}}" data-key="apiKey" bindinput="onApiField" placeholder="火山方舟 ARK API Key"/></view>
+      <view class="row"><text class="lbl">模型名</text><input class="inp" value="{{apiCfg.model}}" data-key="model" bindinput="onApiField" placeholder="留空 = doubao-seedream-5-0-pro-260628"/></view>
+      <view class="row"><text class="lbl">接口地址</text><input class="inp" value="{{apiCfg.endpoint}}" data-key="endpoint" bindinput="onApiField" placeholder="选填：填了就走自建后端，不填走直连/官方"/></view>
+      <view wx:if="{{apiMsg}}" class="msg tip">{{apiMsg}}</view>
+      <button class="btn ok" bindtap="saveApiCfg">保存生图 API</button>
+
+      <!-- 效果图额度：免费已取消，消费者一律不出图；这张卡给老板自己验收用 -->
+      <view class="sub" style="margin-top:20rpx;">效果图额度：剩余 {{quotaText}}。免费额度已取消，消费者购买后才有张数；这里加的张数只在本机，给验收用。</view>
+      <button class="btn" bindtap="addQuota">加 10 张测试额度</button>
+      <button class="btn" bindtap="resetQuota">清零额度（模拟消费者）</button>
+    </view>
+
+    <!-- 工程量算法参数（独立页；只改算法参数，不碰价格/项目数据） -->
+    <view class="card">
+      <view class="ct">工程量算法参数</view>
+      <view class="sub">贴砖高度、损耗率、门洞尺寸、点位数等估算规则的参数，独立页修改，保存后录入页「算」按钮立即生效。</view>
+      <button class="btn ok" bindtap="goQtyRules">打开算法参数页</button>
+    </view>
+
+    <!-- 空间切换 -->
+    <scroll-view scroll-x class="tabs" wx:if="{{spaceKeys.length}}">
+      <view wx:for="{{spaceKeys}}" wx:key="*this" class="tab {{item===activeSpace?'on':''}}" data-k="{{item}}" bindtap="onSelectSpace">{{spaceNames[item]}}</view>
+    </scroll-view>
+
+    <!-- 项目逐条编辑 -->
+    <view class="card">
+      <view class="ct">{{spaceNames[activeSpace]}} · 主材与施工</view>
+      <view class="sub">经济=基准价；舒适/轻奢留空则按经济价算，填了就按你填的价格（倍率自动乘法已删除）。按住左侧 ⠿ 上下拖动可排序；点「复制」可把该项目复制到其它空间。</view>
+      <view wx:for="{{items}}" wx:key="id" class="item proj-item {{dragIdx===index?'dragging':''}} {{dragTarget===index&&dragIdx!==null&&dragIdx!==index?'drop':''}}">
+        <view class="itop">
+          <view class="grip" data-idx="{{index}}" bindtouchstart="onDragStart" catchtouchmove="onDragMove" bindtouchend="onDragEnd">⠿</view>
+          <input class="nm" value="{{item.name}}" data-idx="{{index}}" data-key="name" bindinput="onField" placeholder="项目名"/>
+          <view class="tag {{item.kind==='material'?'m':'l'}}">{{item.kind==='material'?'主材':'施工'}}</view>
+          <switch checked="{{item.on}}" data-idx="{{index}}" bindchange="onToggle"/>
+          <view class="ord" data-idx="{{index}}" data-dir="up" bindtap="moveItem">▲</view>
+          <view class="ord" data-idx="{{index}}" data-dir="down" bindtap="moveItem">▼</view>
+          <view class="cp" data-idx="{{index}}" bindtap="onCopyItem">复制</view>
+          <view class="del" data-idx="{{index}}" bindtap="onDel">删</view>
+        </view>
+        <view class="iprice">
+          <view class="pc"><text>经济</text><input class="pin" type="digit" value="{{item.econ}}" data-idx="{{index}}" data-key="econ" bindinput="onField"/></view>
+          <view class="pc" wx:if="{{item.kind==='material'}}"><text>舒适</text><input class="pin" type="digit" value="{{item.mid}}" data-idx="{{index}}" data-key="mid" bindinput="onField"/></view>
+          <view class="pc" wx:if="{{item.kind==='material'}}"><text>轻奢</text><input class="pin" type="digit" value="{{item.top}}" data-idx="{{index}}" data-key="top" bindinput="onField"/></view>
+          <view class="pc"><text>数量{{item.unit?'·'+item.unit:''}}</text><input class="pin" type="digit" value="{{item.qtyText || item.qty}}" data-idx="{{index}}" data-key="qty" bindinput="onField" bindblur="onItemQtyBlur"/></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 新增项目 -->
+    <view class="card">
+      <view class="ct">新增项目到「{{spaceNames[activeSpace]}}」</view>
+      <view class="row">
+        <picker mode="selector" range="{{['主材','施工']}}" value="{{newItem.kind==='material'?0:1}}" bindchange="onNewKind">
+          <view class="sel">{{newItem.kind==='material'?'主材':'施工'}} ▾</view>
+        </picker>
+        <input class="nm" placeholder="名称" value="{{newItem.name}}" bindinput="onNewName"/>
+        <input class="sinp2" placeholder="单位" value="{{newItem.unit}}" bindinput="onNewUnit"/>
+      </view>
+      <view class="row">
+        <text class="lbl">经济价</text><input class="sinp2" type="digit" value="{{newItem.econ}}" bindinput="onNewEcon"/>
+        <text class="lbl">数量</text><input class="sinp2" type="digit" value="{{newItem.qtyText || newItem.qty}}" bindinput="onNewQty" bindblur="onNewQtyBlur"/>
+        <button class="btn sm" bindtap="addItem">+ 添加</button>
+      </view>
+    </view>
+
+    <!-- 辅助费用 -->
+    <view class="card">
+      <view class="ct">辅助费用（运输/垃圾/保护/保洁/税金/管理费）</view>
+      <view class="sub">fixed=固定金额(元)；pct=按「主材+施工合计」的百分比。勾「全屋计」=按全屋造价算一次（如税金/管理费），否则每个空间各算。</view>
+      <view wx:for="{{auxItems}}" wx:key="id" class="item">
+        <view class="itop">
+          <input class="nm" value="{{item.name}}" data-idx="{{index}}" data-key="name" bindinput="onAuxField" placeholder="费用名"/>
+          <view class="tag {{item.kind==='pct'?'m':'l'}}">{{item.kind==='pct'?'百分比':'固定'}}</view>
+          <switch checked="{{item.on}}" data-idx="{{index}}" bindchange="onAuxToggle"/>
+          <view class="del" data-idx="{{index}}" bindtap="onAuxDel">删</view>
+        </view>
+        <view class="iprice">
+          <block wx:if="{{item.kind==='floor'}}">
+            <view class="pc"><text>每层(元)</text><input class="pin" type="digit" value="{{item.rate}}" data-idx="{{index}}" data-key="rate" bindinput="onAuxField"/></view>
+          </block>
+          <block wx:else>
+            <view class="pc"><text>{{item.kind==='pct'?'百分比%':'金额(元)'}}</text><input class="pin" type="digit" value="{{item.val}}" data-idx="{{index}}" data-key="val" bindinput="onAuxField"/></view>
+          </block>
+          <view class="switchline"><text>全屋计一次</text><switch checked="{{item.whole}}" data-idx="{{index}}" bindchange="onAuxWhole"/></view>
+        </view>
+      </view>
+      <view class="row" style="margin-top:14rpx;">
+        <picker mode="selector" range="{{['固定金额','百分比','按楼层']}}" value="{{newAux.kind==='fixed'?0:(newAux.kind==='pct'?1:2)}}" bindchange="onAuxKind">
+          <view class="sel">{{newAux.kind==='fixed'?'固定金额':(newAux.kind==='pct'?'百分比':'按楼层')}} ▾</view>
+        </picker>
+        <input class="nm" placeholder="费用名" value="{{newAux.name}}" bindinput="onAuxNewName"/>
+        <input wx:if="{{newAux.kind!=='floor'}}" class="sinp2" placeholder="值" value="{{newAux.val}}" bindinput="onAuxNewVal"/>
+        <input wx:else class="sinp2" placeholder="每层元" value="{{newAux.val}}" bindinput="onAuxNewVal"/>
+        <button class="btn sm" bindtap="addAux">+ 添加</button>
+      </view>
+      <view class="row">
+        <text class="lbl">全屋计</text>
+        <switch checked="{{newAux.whole}}" bindchange="onAuxWhole"/>
+      </view>
+    </view>
+
+    <button class="btn ok" bindtap="save">保存并应用（即时生效）</button>
+    <button class="btn" bindtap="copyJson">复制完整计算规则 JSON</button>
+
+    <!-- 历史备份：每次保存自动留底，可一键恢复到任意版本 -->
+    <view class="card">
+      <view class="ct">历史备份（每次保存自动留底）</view>
+      <view class="sub">保存即自动存一份完整规则快照（最多 30 份）。误删项目或被覆盖后，点「恢复」即可回到该版本，无需从头填写。</view>
+      <view wx:if="{{backups.length===0}}" class="sub">暂无备份，保存一次后即出现。</view>
+      <view wx:for="{{backups}}" wx:key="ts" class="bk">
+        <view class="bk-info">
+          <view class="bk-time">{{item.label}}</view>
+          <view class="bk-sum">{{item.text}}</view>
+        </view>
+        <view class="bk-act">
+          <view class="btn sm ok" data-ts="{{item.ts}}" bindtap="restoreBackup">恢复</view>
+        </view>
+      </view>
+      <button wx:if="{{backups.length}}" class="btn" bindtap="clearBackups">清空备份列表</button>
+    </view>
+
+    <view wx:if="{{msg}}" class="msg ok">{{msg}}</view>
+    <view class="tip">修改后点保存即在本机即时生效；填 API_BASE 可同步到服务端（backend/server.js 的 /api/admin/config），多端一致。</view>
+  </block>
+</view>

@@ -1,0 +1,26 @@
+<view class="wrap">
+  <view class="head">我的预算记录</view>
+  <view class="sub">每条记录 = 一次项目合计（1 个空间 + 辅助，或多个空间 + 辅助），点开看合并总预算与各空间明细</view>
+
+  <view wx:if="{{!empty}}" class="grandCard">
+    <view class="glabel">项目记录总预算</view>
+    <view class="gval">¥{{grand}}</view>
+    <view class="gcount">共 {{list.length}} 个项目</view>
+  </view>
+
+  <view wx:if="{{empty}}" class="empty">还没有记录，去首页录入一个空间并生成吧。</view>
+
+  <view wx:for="{{list}}" wx:key="id" class="rec" data-id="{{item.id}}" bindtap="openRecord">
+    <view class="rtop">
+      <text class="rname">{{item.customer || '未命名客户'}}{{item.address ? ' · ' + item.address : ''}}</text>
+      <view class="rright">
+        <text class="rtot">¥{{item.grand}}</text>
+        <view class="rdel" catchtap="delRecord" data-id="{{item.id}}">删除</view>
+      </view>
+    </view>
+    <view class="rmeta">{{item.timeStr}}　含 {{item.spaceCount}} 个空间{{item.spaceNames ? '：' + item.spaceNames : ''}}</view>
+    <view class="rgo">查看合并总预算与分项 ›</view>
+  </view>
+
+  <button wx:if="{{!empty}}" class="clear" bindtap="clear">清空全部记录</button>
+</view>

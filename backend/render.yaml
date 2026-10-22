@@ -1,0 +1,32 @@
+# Render 部署蓝图（免费层）
+# 本仓库即 backend 根目录（独立代理仓库，不含小程序源码）。
+# 用法：Render 控制台 -> New -> Blueprint -> 连含本文件的仓库 -> 按提示填 SILICONFLOW_API_KEY
+services:
+  - type: web
+    name: room-mini-img-proxy
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: ARK_API_KEY
+        sync: false          # 火山方舟（豆包）API Key，效果图默认走这条
+      - key: SILICONFLOW_API_KEY
+        sync: false          # 在 Render 面板手动填你的 sk-xxx
+      - key: PORT
+        value: "3000"
+      - key: WX_MCH_ID
+        sync: false
+      - key: WX_APP_ID
+        value: "wx89952f3a02cdc470"
+      - key: WX_APP_SECRET
+        sync: false
+      - key: WX_CERT_SERIAL
+        sync: false
+      - key: WX_PRIVATE_KEY_B64
+        sync: false
+      - key: WX_API_V3_KEY
+        sync: false          # APIv3 密钥（32 位），用于解密支付回调，填错收不到钱
+      - key: WX_NOTIFY_URL
+        sync: false          # https://room-rchx.onrender.com/api/wxpay-notify
+      - key: ADMIN_KEY
+        sync: false          # 查订单/对账口令

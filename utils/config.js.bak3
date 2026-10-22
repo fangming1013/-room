@@ -1,0 +1,1782 @@
+// ============================================================
+// 计算规则（单一数据源 / SINGLE SOURCE OF TRUTH）
+// 于 2026-09-23 参照《快装巴士上海预算清单模板 10.01新》生成：
+//   厨房/卫生间/客餐厅(客厅)/卧室 直接来自模板；书房=卧室一致；
+//   阳台=现有项目+卧室版本；隐藏项(单价空/0)已跳过。
+//   同款主材多价 -> 经济=最低价 / 舒适=中价 / 轻奢=最高价。
+// 倍率自动乘法已删除，三档均以后台手动录入价计算。
+// ============================================================
+
+const TIERS = {
+  "none": { "id": "none", "name": "经济" },
+  "mid":  { "id": "mid",  "name": "舒适" },
+  "top":  { "id": "top",  "name": "轻奢" }
+};
+const TIER_LIST = ["none","mid","top"];
+
+const AD_FEE = { "top": 800, "mid": 300, "none": 0 };
+function adFee(tier) { return AD_FEE[tier] || 0; }
+
+const AUX = [
+  {
+    "id": "demo_all",
+    "name": "全屋拆除",
+    "kind": "fixed",
+    "on": true,
+    "whole": true,
+    "val": 3800
+  },
+  {
+    "id": "carry",
+    "name": "材料运输及上楼费",
+    "kind": "floor",
+    "on": true,
+    "whole": true,
+    "rate": 200
+  },
+  {
+    "id": "rubbish",
+    "name": "垃圾外运",
+    "kind": "fixed",
+    "on": true,
+    "whole": false,
+    "val": 1200
+  },
+  {
+    "id": "protect",
+    "name": "成品保护",
+    "kind": "fixed",
+    "on": true,
+    "whole": false,
+    "val": 1000
+  },
+  {
+    "id": "localprotect",
+    "name": "局部保护",
+    "kind": "fixed",
+    "on": true,
+    "whole": false,
+    "val": 800
+  },
+  {
+    "id": "clean",
+    "name": "完工保洁",
+    "kind": "fixed",
+    "on": true,
+    "whole": false,
+    "val": 600
+  },
+  {
+    "id": "tax",
+    "name": "税金",
+    "kind": "pct",
+    "on": true,
+    "whole": true,
+    "val": 3
+  },
+  {
+    "id": "mgr",
+    "name": "工程管理费",
+    "kind": "pct",
+    "on": true,
+    "whole": true,
+    "val": 10
+  }
+];
+
+const SPACES = {
+  "kitchen": {
+    "name": "厨房",
+    "w": 320,
+    "d": 260,
+    "h": 260,
+    "doorWall": "right",
+    "doorW": 80,
+    "doorEnd": "min",
+    "winWall": "top",
+    "winW": 120,
+    "materials": [
+      {
+        "id": "拉篮",
+        "name": "拉篮",
+        "unit": "个",
+        "price": 780,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 980,
+          "top": 1580
+        }
+      },
+      {
+        "id": "水槽抽拉龙头",
+        "name": "水槽抽拉龙头",
+        "unit": "套",
+        "price": 1280,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 1580,
+          "top": 1580
+        }
+      },
+      {
+        "id": "推拉门",
+        "name": "推拉门",
+        "unit": "M²",
+        "price": 1280,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 1600,
+          "top": 1600
+        }
+      },
+      {
+        "id": "平开门钛镁合金",
+        "name": "平开门（钛镁合金）",
+        "unit": "樘",
+        "price": 1580,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 1780,
+          "top": 1780
+        }
+      },
+      {
+        "id": "套装门",
+        "name": "套装门",
+        "unit": "樘",
+        "price": 1280,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 1580,
+          "top": 1800
+        }
+      },
+      {
+        "id": "烟机灶具套餐",
+        "name": "烟机灶具套餐",
+        "unit": "套",
+        "price": 2600,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 3500,
+          "top": 3500
+        }
+      },
+      {
+        "id": "翻筑工艺套餐",
+        "name": "翻筑工艺套餐",
+        "unit": "套",
+        "price": 17800,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "超出面积",
+        "name": "超出面积",
+        "unit": "M²",
+        "price": 1000,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "地柜长度",
+        "name": "地柜长度",
+        "unit": "M",
+        "price": 1800,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "吊柜长度",
+        "name": "吊柜长度",
+        "unit": "M",
+        "price": 880,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "见光板",
+        "name": "见光板",
+        "unit": "块",
+        "price": 300,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "包烟管",
+        "name": "包烟管",
+        "unit": "个",
+        "price": 300,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "抽屉",
+        "name": "抽屉",
+        "unit": "个",
+        "price": 200,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "吊顶",
+        "name": "吊顶",
+        "unit": "项",
+        "price": 1280,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "厨房双边木门套",
+        "name": "厨房双边木门套",
+        "unit": "M",
+        "price": 260,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "钛镁合金门套",
+        "name": "钛镁合金门套",
+        "unit": "M",
+        "price": 280,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "开关插座面板",
+        "name": "开关插座面板",
+        "unit": "个",
+        "price": 38,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "热水器",
+        "name": "热水器",
+        "unit": "个",
+        "price": 2600,
+        "qty": 1,
+        "on": true
+      }
+    ],
+    "labor": [
+      {
+        "id": "墙地砖整体拆除",
+        "name": "墙地砖整体拆除",
+        "unit": "项",
+        "price": 1800,
+        "qty": 1,
+        "on": true,
+        "group": "demo"
+      },
+      {
+        "id": "拆除后修补",
+        "name": "拆除后修补",
+        "unit": "项",
+        "price": 1200,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "局部拆除",
+        "name": "局部拆除",
+        "unit": "项",
+        "price": 800,
+        "qty": 0,
+        "on": true,
+        "group": "demo"
+      },
+      {
+        "id": "水电位改造",
+        "name": "水电位改造",
+        "unit": "项",
+        "price": 1500,
+        "qty": 0,
+        "on": true,
+        "group": "water"
+      },
+      {
+        "id": "全空间做水电",
+        "name": "全空间做水电",
+        "unit": "项",
+        "price": 2800,
+        "qty": 1,
+        "on": true,
+        "group": "water"
+      },
+      {
+        "id": "贴砖",
+        "name": "贴砖",
+        "unit": "M²",
+        "price": 300,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "台中盆加工",
+        "name": "台中盆加工",
+        "unit": "个",
+        "price": 280,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "门套基层处理",
+        "name": "门套基层处理",
+        "unit": "项",
+        "price": 680,
+        "qty": 1,
+        "on": true
+      }
+    ],
+    "furniture": [
+      {
+        "id": "cabinet",
+        "name": "橱柜",
+        "on": true
+      },
+      {
+        "id": "hood",
+        "name": "油烟机",
+        "on": true
+      },
+      {
+        "id": "stove",
+        "name": "灶具",
+        "on": true
+      },
+      {
+        "id": "fridge",
+        "name": "冰箱",
+        "on": true
+      }
+    ]
+  },
+  "bathroom": {
+    "name": "卫生间",
+    "w": 200,
+    "d": 260,
+    "h": 250,
+    "doorWall": "right",
+    "doorW": 70,
+    "doorEnd": "min",
+    "winWall": "top",
+    "winW": 80,
+    "materials": [
+      {
+        "id": "成品淋浴房",
+        "name": "成品淋浴房",
+        "unit": "套",
+        "price": 1680,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 2080,
+          "top": 2080
+        }
+      },
+      {
+        "id": "淋浴房定制",
+        "name": "淋浴房（定制）",
+        "unit": "M²",
+        "price": 580,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 780,
+          "top": 780
+        }
+      },
+      {
+        "id": "暖风机冷风机",
+        "name": "暖风机/冷风机",
+        "unit": "个",
+        "price": 580,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 780,
+          "top": 1280
+        }
+      },
+      {
+        "id": "龙头",
+        "name": "龙头",
+        "unit": "个",
+        "price": 280,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 380,
+          "top": 380
+        }
+      },
+      {
+        "id": "马桶",
+        "name": "马桶",
+        "unit": "个",
+        "price": 1280,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 2280,
+          "top": 3980
+        }
+      },
+      {
+        "id": "花洒",
+        "name": "花洒",
+        "unit": "套",
+        "price": 980,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 1280,
+          "top": 1280
+        }
+      },
+      {
+        "id": "平开门钛镁合金",
+        "name": "平开门（钛镁合金）",
+        "unit": "樘",
+        "price": 1580,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 1780,
+          "top": 1780
+        }
+      },
+      {
+        "id": "套装门",
+        "name": "套装门",
+        "unit": "樘",
+        "price": 1280,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 1580,
+          "top": 1800
+        }
+      },
+      {
+        "id": "翻筑工艺套餐",
+        "name": "翻筑工艺套餐",
+        "unit": "套",
+        "price": 16800,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "超出面积",
+        "name": "超出面积",
+        "unit": "M²",
+        "price": 1000,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "铝扣板吊顶",
+        "name": "铝扣板吊顶",
+        "unit": "项",
+        "price": 1280,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "主材包",
+        "name": "主材包",
+        "unit": "套",
+        "price": 5500,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "成品卫浴柜60-90cm",
+        "name": "成品卫浴柜（60-90cm）简约款",
+        "unit": "套",
+        "price": 1980,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "开关插座面板",
+        "name": "开关插座面板",
+        "unit": "个",
+        "price": 38,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "钛镁合金门套",
+        "name": "钛镁合金门套",
+        "unit": "M",
+        "price": 280,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "淋浴区大理石台板",
+        "name": "淋浴区大理石台板",
+        "unit": "块",
+        "price": 1800,
+        "qty": 1,
+        "on": true
+      }
+    ],
+    "labor": [
+      {
+        "id": "墙地砖整体拆除",
+        "name": "墙地砖整体拆除",
+        "unit": "项",
+        "price": 1800,
+        "qty": 1,
+        "on": true,
+        "group": "demo"
+      },
+      {
+        "id": "局部拆除",
+        "name": "局部拆除",
+        "unit": "项",
+        "price": 800,
+        "qty": 0,
+        "on": true,
+        "group": "demo"
+      },
+      {
+        "id": "拆除后修补",
+        "name": "拆除后修补",
+        "unit": "项",
+        "price": 1200,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "隔音棉包水管",
+        "name": "隔音棉包水管",
+        "unit": "根",
+        "price": 800,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "水电位改造局部改造",
+        "name": "水电位改造（局部改造）",
+        "unit": "项",
+        "price": 1500,
+        "qty": 0,
+        "on": true,
+        "group": "water"
+      },
+      {
+        "id": "全空间做水电",
+        "name": "全空间做水电",
+        "unit": "项",
+        "price": 2800,
+        "qty": 1,
+        "on": true,
+        "group": "water"
+      },
+      {
+        "id": "防水处理",
+        "name": "防水处理",
+        "unit": "项",
+        "price": 800,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "防水处理2",
+        "name": "防水处理",
+        "unit": "M²",
+        "price": 68,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "伟星咖乐防水湿区1.8m",
+        "name": "伟星咖乐防水湿区1.8m",
+        "unit": "间",
+        "price": 1280,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "伟星咖乐防水湿区到顶",
+        "name": "伟星咖乐防水湿区到顶",
+        "unit": "间",
+        "price": 1380,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "贴砖",
+        "name": "贴砖",
+        "unit": "M²",
+        "price": 300,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "门套基层处理",
+        "name": "门套基层处理",
+        "unit": "项",
+        "price": 680,
+        "qty": 1,
+        "on": true
+      }
+    ],
+    "furniture": [
+      {
+        "id": "toilet",
+        "name": "马桶/蹲坑",
+        "on": true
+      },
+      {
+        "id": "vanity",
+        "name": "浴室柜",
+        "on": true
+      },
+      {
+        "id": "shower",
+        "name": "淋浴隔断",
+        "on": true
+      }
+    ]
+  },
+  "living": {
+    "name": "客厅",
+    "w": 420,
+    "d": 360,
+    "h": 280,
+    "doorWall": "left",
+    "doorW": 90,
+    "doorEnd": "min",
+    "winWall": "top",
+    "winW": 240,
+    "materials": [
+      {
+        "id": "入户门",
+        "name": "入户门",
+        "unit": "樘",
+        "price": 1680,
+        "qty": 0,
+        "on": true,
+        "prices": {
+          "mid": 2500,
+          "top": 3500
+        }
+      },
+      {
+        "id": "复合实木地板",
+        "name": "复合实木地板",
+        "unit": "M²",
+        "price": 238,
+        "qty": 1,
+        "on": false,
+        "group": "floor_cover"
+      },
+      {
+        "id": "实木踢脚线",
+        "name": "实木踢脚线",
+        "unit": "米",
+        "price": 38,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "开关插座面板",
+        "name": "开关插座面板",
+        "unit": "个",
+        "price": 38,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "入户门门套",
+        "name": "入户门门套",
+        "unit": "米",
+        "price": 158,
+        "qty": 0,
+        "on": true
+      }
+    ],
+    "labor": [
+      {
+        "id": "墙地砖整体拆除",
+        "name": "墙地砖整体拆除",
+        "unit": "项",
+        "price": 1800,
+        "qty": 1,
+        "on": true,
+        "group": "demo"
+      },
+      {
+        "id": "墙面涂料",
+        "name": "墙面涂料",
+        "unit": "M²",
+        "price": 68,
+        "qty": 1,
+        "on": true,
+        "group": "coating"
+      },
+      {
+        "id": "顶面涂料",
+        "name": "顶面涂料",
+        "unit": "M²",
+        "price": 58,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "芸菁砂艺术墙面",
+        "name": "芸菁砂艺术墙面",
+        "unit": "M²",
+        "price": 98,
+        "qty": 1,
+        "on": false,
+        "group": "coating"
+      },
+      {
+        "id": "墙面铲除",
+        "name": "墙面铲除",
+        "unit": "M²",
+        "price": 30,
+        "qty": 1,
+        "on": true,
+        "group": "wall_rm"
+      },
+      {
+        "id": "乳胶漆铲除",
+        "name": "乳胶漆铲除",
+        "unit": "M²",
+        "price": 10,
+        "qty": 1,
+        "on": false,
+        "group": "wall_rm"
+      },
+      {
+        "id": "腻子粉批刮",
+        "name": "腻子粉批刮",
+        "unit": "M²",
+        "price": 30,
+        "qty": 1,
+        "on": false,
+        "group": "wall_base"
+      },
+      {
+        "id": "墙纸拆除",
+        "name": "墙纸拆除",
+        "unit": "M²",
+        "price": 10,
+        "qty": 1,
+        "on": false,
+        "group": "wall_rm"
+      },
+      {
+        "id": "墙面局部修复基层处理",
+        "name": "墙面局部修复基层处理",
+        "unit": "M²",
+        "price": 20,
+        "qty": 1,
+        "on": true,
+        "group": "wall_base"
+      },
+      {
+        "id": "墙面粉刷红砖墙处理",
+        "name": "墙面粉刷（红砖墙处理）",
+        "unit": "M²",
+        "price": 48,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "石膏板吊顶平顶",
+        "name": "石膏板吊顶（平顶）",
+        "unit": "M²",
+        "price": 150,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "防水石膏板吊顶",
+        "name": "防水石膏板吊顶",
+        "unit": "M²",
+        "price": 200,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "入户门改色",
+        "name": "入户门改色",
+        "unit": "个",
+        "price": 899,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "家具改色",
+        "name": "家具改色",
+        "unit": "M²",
+        "price": 180,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "地面自流平",
+        "name": "地面自流平",
+        "unit": "M²",
+        "price": 90,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "局部拆除",
+        "name": "局部拆除",
+        "unit": "项",
+        "price": 800,
+        "qty": 0,
+        "on": true,
+        "group": "demo"
+      },
+      {
+        "id": "水电位改造",
+        "name": "水电位改造",
+        "unit": "项",
+        "price": 1500,
+        "qty": 0,
+        "on": true,
+        "group": "water"
+      },
+      {
+        "id": "全空间做水电",
+        "name": "全空间做水电",
+        "unit": "项",
+        "price": 2800,
+        "qty": 1,
+        "on": true,
+        "group": "water"
+      },
+      {
+        "id": "贴砖",
+        "name": "贴砖",
+        "unit": "M²",
+        "price": 300,
+        "qty": 1,
+        "on": true,
+        "group": "floor_cover"
+      },
+      {
+        "id": "美缝",
+        "name": "瓷砖美缝",
+        "unit": "M²",
+        "price": 30,
+        "qty": 1,
+        "on": true
+      }
+    ],
+    "furniture": [
+      {
+        "id": "sofa",
+        "name": "沙发",
+        "on": true
+      },
+      {
+        "id": "table",
+        "name": "茶几",
+        "on": true
+      },
+      {
+        "id": "tv",
+        "name": "电视",
+        "on": true
+      },
+      {
+        "id": "tvcab",
+        "name": "电视柜",
+        "on": true
+      },
+      {
+        "id": "bed",
+        "name": "床",
+        "on": false
+      },
+      {
+        "id": "wardrobe",
+        "name": "衣柜",
+        "on": false
+      },
+      {
+        "id": "desk",
+        "name": "书桌",
+        "on": false
+      }
+    ]
+  },
+  "bedroom": {
+    "name": "卧室",
+    "w": 360,
+    "d": 320,
+    "h": 280,
+    "doorWall": "left",
+    "doorW": 90,
+    "doorEnd": "min",
+    "winWall": "top",
+    "winW": 180,
+    "materials": [
+      {
+        "id": "套装门",
+        "name": "套装门",
+        "unit": "樘",
+        "price": 1580,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "定制衣柜",
+        "name": "定制衣柜",
+        "unit": "M²",
+        "price": 1080,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 1280,
+          "top": 1280
+        }
+      },
+      {
+        "id": "复合实木地板",
+        "name": "复合实木地板",
+        "unit": "M²",
+        "price": 238,
+        "qty": 1,
+        "on": true,
+        "group": "floor_cover"
+      },
+      {
+        "id": "石塑地板6mm",
+        "name": "石塑地板（6mm）",
+        "unit": "M²",
+        "price": 118,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "实木踢脚线",
+        "name": "实木踢脚线",
+        "unit": "米",
+        "price": 38,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "双边木门套",
+        "name": "双边木门套",
+        "unit": "米",
+        "price": 260,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "开关插座面板",
+        "name": "开关插座面板",
+        "unit": "个",
+        "price": 38,
+        "qty": 1,
+        "on": true
+      }
+    ],
+    "labor": [
+      {
+        "id": "墙面涂料",
+        "name": "墙面涂料",
+        "unit": "M²",
+        "price": 68,
+        "qty": 1,
+        "on": true,
+        "group": "coating"
+      },
+      {
+        "id": "顶面涂料",
+        "name": "顶面涂料",
+        "unit": "M²",
+        "price": 58,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "芸菁砂艺术墙面",
+        "name": "芸菁砂艺术墙面",
+        "unit": "M²",
+        "price": 98,
+        "qty": 1,
+        "on": false,
+        "group": "coating"
+      },
+      {
+        "id": "墙纸拆除",
+        "name": "墙纸拆除",
+        "unit": "M²",
+        "price": 10,
+        "qty": 1,
+        "on": false,
+        "group": "wall_rm"
+      },
+      {
+        "id": "墙面局部修复基层处理",
+        "name": "墙面局部修复基层处理",
+        "unit": "M²",
+        "price": 20,
+        "qty": 1,
+        "on": true,
+        "group": "wall_base"
+      },
+      {
+        "id": "墙面铲除",
+        "name": "墙面铲除",
+        "unit": "M²",
+        "price": 30,
+        "qty": 1,
+        "on": true,
+        "group": "wall_rm"
+      },
+      {
+        "id": "乳胶漆铲除",
+        "name": "乳胶漆铲除",
+        "unit": "M²",
+        "price": 10,
+        "qty": 1,
+        "on": false,
+        "group": "wall_rm"
+      },
+      {
+        "id": "腻子粉批刮",
+        "name": "腻子粉批刮",
+        "unit": "M²",
+        "price": 30,
+        "qty": 1,
+        "on": false,
+        "group": "wall_base"
+      },
+      {
+        "id": "墙面粉刷红砖墙处理",
+        "name": "墙面粉刷（红砖墙处理）",
+        "unit": "M²",
+        "price": 48,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "石膏板吊顶平顶",
+        "name": "石膏板吊顶（平顶）",
+        "unit": "M²",
+        "price": 150,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "防水石膏板吊顶",
+        "name": "防水石膏板吊顶",
+        "unit": "M²",
+        "price": 200,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "入户门改色",
+        "name": "入户门改色",
+        "unit": "个",
+        "price": 899,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "家具改色",
+        "name": "家具改色",
+        "unit": "M²",
+        "price": 180,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "地面自流平",
+        "name": "地面自流平",
+        "unit": "M²",
+        "price": 90,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "局部拆除",
+        "name": "局部拆除",
+        "unit": "项",
+        "price": 800,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "水电位改造",
+        "name": "水电位改造",
+        "unit": "项",
+        "price": 1500,
+        "qty": 0,
+        "on": true,
+        "group": "water"
+      },
+      {
+        "id": "全空间做水电",
+        "name": "全空间做水电",
+        "unit": "项",
+        "price": 2800,
+        "qty": 1,
+        "on": true,
+        "group": "water"
+      },
+      {
+        "id": "贴砖",
+        "name": "贴砖",
+        "unit": "M²",
+        "price": 300,
+        "qty": 1,
+        "on": true,
+        "group": "floor_cover"
+      },
+      {
+        "id": "美缝",
+        "name": "瓷砖美缝",
+        "unit": "M²",
+        "price": 30,
+        "qty": 1,
+        "on": true
+      }
+    ],
+    "furniture": [
+      {
+        "id": "bed",
+        "name": "床",
+        "on": true
+      },
+      {
+        "id": "wardrobe",
+        "name": "衣柜",
+        "on": true
+      },
+      {
+        "id": "desk",
+        "name": "书桌",
+        "on": false
+      }
+    ]
+  },
+  "balcony": {
+    "name": "阳台",
+    "w": 180,
+    "d": 140,
+    "h": 260,
+    "doorWall": "left",
+    "doorW": 80,
+    "doorEnd": "max",
+    "winWall": "top",
+    "winW": 160,
+    "materials": [
+      {
+        "id": "light",
+        "name": "阳台灯",
+        "unit": "台",
+        "price": 200,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "floor_drain",
+        "name": "地漏",
+        "unit": "个",
+        "price": 60,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "threshold",
+        "name": "过门石",
+        "unit": "块",
+        "price": 80,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "paint",
+        "name": "乳胶漆",
+        "unit": "㎡",
+        "price": 68,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "wardrobe",
+        "name": "定制衣柜",
+        "unit": "㎡",
+        "price": 1080,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "doorset_single",
+        "name": "单面门套",
+        "unit": "米",
+        "price": 158,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "artwall",
+        "name": "云膏砂艺术墙面",
+        "unit": "㎡",
+        "price": 98,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "light2",
+        "name": "卧室主灯",
+        "unit": "台",
+        "price": 500,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "复合实木地板",
+        "name": "复合实木地板",
+        "unit": "M²",
+        "price": 238,
+        "qty": 1,
+        "on": false,
+        "group": "floor_cover"
+      },
+      {
+        "id": "石塑地板6mm",
+        "name": "石塑地板（6mm）",
+        "unit": "M²",
+        "price": 118,
+        "qty": 1,
+        "on": false,
+        "group": "floor_cover"
+      },
+      {
+        "id": "实木踢脚线",
+        "name": "实木踢脚线",
+        "unit": "米",
+        "price": 38,
+        "qty": 1,
+        "on": false,
+        "group": "floor_cover"
+      },
+      {
+        "id": "双边木门套",
+        "name": "双边木门套",
+        "unit": "米",
+        "price": 260,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "开关插座面板",
+        "name": "开关插座面板",
+        "unit": "个",
+        "price": 38,
+        "qty": 1,
+        "on": true
+      }
+    ],
+    "labor": [
+      {
+        "id": "墙地砖整体拆除",
+        "name": "墙地砖整体拆除",
+        "unit": "项",
+        "price": 1800,
+        "qty": 1,
+        "on": true,
+        "group": "demo"
+      },
+      {
+        "id": "y_water",
+        "name": "防水",
+        "unit": "㎡",
+        "price": 60,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "y_light",
+        "name": "灯具安装",
+        "unit": "项",
+        "price": 100,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "partial",
+        "name": "局部粉砌",
+        "unit": "㎡",
+        "price": 20,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "墙面涂料",
+        "name": "墙面涂料",
+        "unit": "M²",
+        "price": 68,
+        "qty": 1,
+        "on": true,
+        "group": "coating"
+      },
+      {
+        "id": "顶面涂料",
+        "name": "顶面涂料",
+        "unit": "M²",
+        "price": 58,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "芸菁砂艺术墙面",
+        "name": "芸菁砂艺术墙面",
+        "unit": "M²",
+        "price": 98,
+        "qty": 1,
+        "on": false,
+        "group": "coating"
+      },
+      {
+        "id": "墙纸拆除",
+        "name": "墙纸拆除",
+        "unit": "M²",
+        "price": 10,
+        "qty": 1,
+        "on": false,
+        "group": "wall_rm"
+      },
+      {
+        "id": "墙面局部修复基层处理",
+        "name": "墙面局部修复基层处理",
+        "unit": "M²",
+        "price": 20,
+        "qty": 1,
+        "on": true,
+        "group": "wall_base"
+      },
+      {
+        "id": "石膏板吊顶平顶",
+        "name": "石膏板吊顶（平顶）",
+        "price": 150,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "防水石膏板吊顶",
+        "name": "防水石膏板吊顶",
+        "price": 200,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "墙面粉刷红砖墙处理",
+        "name": "墙面粉刷（红砖墙处理）",
+        "price": 48,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "地面自流平",
+        "name": "地面自流平",
+        "price": 90,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "腻子粉批刮",
+        "name": "腻子粉批刮",
+        "price": 30,
+        "qty": 1,
+        "on": false,
+        "group": "wall_base"
+      },
+      {
+        "id": "乳胶漆铲除",
+        "name": "乳胶漆铲除",
+        "price": 10,
+        "qty": 1,
+        "on": false,
+        "group": "wall_rm"
+      },
+      {
+        "id": "墙面铲除",
+        "name": "墙面铲除",
+        "unit": "M²",
+        "price": 30,
+        "qty": 1,
+        "on": true,
+        "group": "wall_rm"
+      },
+      {
+        "id": "局部拆除",
+        "name": "局部拆除",
+        "unit": "项",
+        "price": 800,
+        "qty": 0,
+        "on": true,
+        "group": "demo"
+      },
+      {
+        "id": "水电位改造",
+        "name": "水电位改造",
+        "unit": "项",
+        "price": 1500,
+        "qty": 0,
+        "on": true,
+        "group": "water"
+      },
+            {
+        "id": "贴砖",
+        "name": "贴砖",
+        "unit": "㎡",
+        "price": 300,
+        "qty": 1,
+        "on": true,
+        "group": "floor_cover"
+      },
+{
+        "id": "美缝",
+        "name": "瓷砖美缝",
+        "unit": "M²",
+        "price": 30,
+        "qty": 1,
+        "on": true
+      }
+    ],
+    "furniture": [
+      {
+        "id": "desk",
+        "name": "书桌",
+        "on": false
+      }
+    ]
+  },
+  "study": {
+    "name": "书房",
+    "w": 300,
+    "d": 260,
+    "h": 280,
+    "doorWall": "left",
+    "doorW": 90,
+    "doorEnd": "min",
+    "winWall": "top",
+    "winW": 150,
+    "materials": [
+      {
+        "id": "套装门",
+        "name": "套装门",
+        "unit": "樘",
+        "price": 1580,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "定制衣柜",
+        "name": "定制衣柜",
+        "unit": "M²",
+        "price": 1080,
+        "qty": 1,
+        "on": true,
+        "prices": {
+          "mid": 1280,
+          "top": 1280
+        }
+      },
+      {
+        "id": "复合实木地板",
+        "name": "复合实木地板",
+        "unit": "M²",
+        "price": 238,
+        "qty": 1,
+        "on": true,
+        "group": "floor_cover"
+      },
+      {
+        "id": "石塑地板6mm",
+        "name": "石塑地板（6mm）",
+        "unit": "M²",
+        "price": 118,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "实木踢脚线",
+        "name": "实木踢脚线",
+        "unit": "米",
+        "price": 38,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "双边木门套",
+        "name": "双边木门套",
+        "unit": "米",
+        "price": 260,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "开关插座面板",
+        "name": "开关插座面板",
+        "unit": "个",
+        "price": 38,
+        "qty": 1,
+        "on": true
+      }
+    ],
+    "labor": [
+      {
+        "id": "墙面涂料",
+        "name": "墙面涂料",
+        "unit": "M²",
+        "price": 68,
+        "qty": 1,
+        "on": true,
+        "group": "coating"
+      },
+      {
+        "id": "顶面涂料",
+        "name": "顶面涂料",
+        "unit": "M²",
+        "price": 58,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "芸菁砂艺术墙面",
+        "name": "芸菁砂艺术墙面",
+        "unit": "M²",
+        "price": 98,
+        "qty": 1,
+        "on": false,
+        "group": "coating"
+      },
+      {
+        "id": "墙纸拆除",
+        "name": "墙纸拆除",
+        "unit": "M²",
+        "price": 10,
+        "qty": 1,
+        "on": false,
+        "group": "wall_rm"
+      },
+      {
+        "id": "墙面局部修复基层处理",
+        "name": "墙面局部修复基层处理",
+        "unit": "M²",
+        "price": 20,
+        "qty": 1,
+        "on": true,
+        "group": "wall_base"
+      },
+      {
+        "id": "墙面铲除",
+        "name": "墙面铲除",
+        "unit": "M²",
+        "price": 30,
+        "qty": 1,
+        "on": true,
+        "group": "wall_rm"
+      },
+      {
+        "id": "乳胶漆铲除",
+        "name": "乳胶漆铲除",
+        "unit": "M²",
+        "price": 10,
+        "qty": 1,
+        "on": false,
+        "group": "wall_rm"
+      },
+      {
+        "id": "腻子粉批刮",
+        "name": "腻子粉批刮",
+        "unit": "M²",
+        "price": 30,
+        "qty": 1,
+        "on": false,
+        "group": "wall_base"
+      },
+      {
+        "id": "墙面粉刷红砖墙处理",
+        "name": "墙面粉刷（红砖墙处理）",
+        "unit": "M²",
+        "price": 48,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "石膏板吊顶平顶",
+        "name": "石膏板吊顶（平顶）",
+        "unit": "M²",
+        "price": 150,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "防水石膏板吊顶",
+        "name": "防水石膏板吊顶",
+        "unit": "M²",
+        "price": 200,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "入户门改色",
+        "name": "入户门改色",
+        "unit": "个",
+        "price": 899,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "家具改色",
+        "name": "家具改色",
+        "unit": "M²",
+        "price": 180,
+        "qty": 0,
+        "on": true
+      },
+      {
+        "id": "地面自流平",
+        "name": "地面自流平",
+        "unit": "M²",
+        "price": 90,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "局部拆除",
+        "name": "局部拆除",
+        "unit": "项",
+        "price": 800,
+        "qty": 1,
+        "on": true
+      },
+      {
+        "id": "水电位改造",
+        "name": "水电位改造",
+        "unit": "项",
+        "price": 1500,
+        "qty": 0,
+        "on": true,
+        "group": "water"
+      },
+      {
+        "id": "全空间做水电",
+        "name": "全空间做水电",
+        "unit": "项",
+        "price": 2800,
+        "qty": 1,
+        "on": true,
+        "group": "water"
+      },
+      {
+        "id": "贴砖",
+        "name": "贴砖",
+        "unit": "M²",
+        "price": 300,
+        "qty": 1,
+        "on": true,
+        "group": "floor_cover"
+      },
+      {
+        "id": "美缝",
+        "name": "瓷砖美缝",
+        "unit": "M²",
+        "price": 30,
+        "qty": 1,
+        "on": true
+      }
+    ],
+    "furniture": [
+      {
+        "id": "bed",
+        "name": "床",
+        "on": true
+      },
+      {
+        "id": "wardrobe",
+        "name": "衣柜",
+        "on": true
+      },
+      {
+        "id": "desk",
+        "name": "书桌",
+        "on": false
+      }
+    ]
+  }
+};
+
+const SPACE_KEYS = ["kitchen","bathroom","living","bedroom","balcony","study"];
+
+const MATERIAL_CATALOG = [];
+SPACE_KEYS.forEach(k => {
+  (SPACES[k].materials || []).forEach(m => {
+    MATERIAL_CATALOG.push({ id: m.id, name: m.name, space: k, spaceName: SPACES[k].name });
+  });
+});
+
+const RENDER_IMG = {
+  kitchen: '/assets/renders/kitchen.jpg',
+  bathroom: '/assets/renders/bathroom.jpg',
+  living: '/assets/renders/living.jpg',
+  bedroom: '/assets/renders/bedroom.jpg',
+  balcony: '/assets/renders/balcony.jpg',
+  study: '/assets/renders/study.jpg'
+};
+
+const WALLS = [
+  { id: 'top', name: '上/北' },
+  { id: 'bottom', name: '下/南' },
+  { id: 'left', name: '左/西' },
+  { id: 'right', name: '右/东' }
+];
+
+module.exports = {
+  TIERS, TIER_LIST, AD_FEE, adFee, AUX,
+  SPACES, SPACE_KEYS, MATERIAL_CATALOG, RENDER_IMG, WALLS,
+  setOverride, getOverride,
+  tiers, tierList, adFeeMap, aux, spaces, spaceKeys, materialCatalog, walls, renderImg
+};
+
+let OVERRIDE = null;
+function setOverride(o) { if (o && typeof o === 'object') OVERRIDE = o; }
+function getOverride() { return OVERRIDE; }
+
+function tiers() { return (OVERRIDE && OVERRIDE.tiers) || TIERS; }
+function tierList() { return (OVERRIDE && OVERRIDE.tierList) || TIER_LIST; }
+function adFeeMap() { return (OVERRIDE && OVERRIDE.adFee) || AD_FEE; }
+function aux() { return (OVERRIDE && Array.isArray(OVERRIDE.aux)) ? OVERRIDE.aux : AUX; }
+function spaces() { return (OVERRIDE && OVERRIDE.spaces) || SPACES; }
+function spaceKeys() {
+  if (OVERRIDE && OVERRIDE.spaces) return Object.keys(OVERRIDE.spaces);
+  return SPACE_KEYS;
+}
+function materialCatalog() {
+  const S = spaces();
+  const out = [];
+  spaceKeys().forEach(k => {
+    (S[k].materials || []).forEach(m => out.push({ id: m.id, name: m.name, space: k, spaceName: S[k].name }));
+  });
+  return out;
+}
+function walls() { return WALLS; }
+function renderImg() { return RENDER_IMG; }

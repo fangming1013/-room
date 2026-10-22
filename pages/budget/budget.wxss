@@ -1,0 +1,124 @@
+.wrap { padding: 24rpx 24rpx 60rpx; }
+.head { font-size: 30rpx; font-weight: 600; color: var(--text-1); background: var(--card); border-radius: var(--r-md); padding: 28rpx 24rpx; text-align: center; box-shadow: var(--shadow); }
+
+/* ===== 空间信息卡 ===== */
+.spaceCard {
+  background: var(--brand); color: #fff;
+  border-radius: var(--r-lg); padding: 28rpx 30rpx;
+  box-shadow: 0 8rpx 22rpx rgba(16, 185, 129, .22);
+}
+.scName { font-size: 36rpx; font-weight: 800; letter-spacing: 1rpx; }
+.scMeta { font-size: 24rpx; opacity: .92; margin-top: 10rpx; }
+
+/* ===== 档位选择条 + 三档卡 ===== */
+.tierBar {
+  font-size: 26rpx; color: var(--text-2); background: var(--card);
+  border-radius: var(--r-md); padding: 16rpx 24rpx; margin: 16rpx 0;
+  box-shadow: var(--shadow);
+}
+.tierBar .tn { color: var(--brand-deep); font-weight: 700; }
+
+.badge { font-size: 20rpx; color: var(--warn); background: var(--warn-bg); border: 1rpx solid var(--warn-line); border-radius: 8rpx; padding: 2rpx 10rpx; margin-left: 10rpx; }
+.badge.alg { color: #1f8a70; background: #eaf7f1; border-color: #bfe6d8; }
+.badge.mf { color: #fff; background: #ff9f43; border-color: #ff9f43; }
+
+.tiers { display: flex; gap: 14rpx; margin: 6rpx 0 4rpx; }
+.tierCard { flex: 1; border: 2rpx solid var(--line); border-radius: var(--r-md); padding: 18rpx 10rpx; text-align: center; background: var(--line-soft); transition: all .15s; }
+.tierCard.on { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 4rpx 14rpx rgba(16, 185, 129, .14); }
+.tcName { font-size: 28rpx; font-weight: 700; color: var(--brand-deep); margin-bottom: 6rpx; }
+.tcMat, .tcLab { font-size: 22rpx; color: var(--text-3); line-height: 1.5; }
+.tcTot { font-size: 28rpx; font-weight: 700; color: var(--price); margin-top: 6rpx; }
+
+/* ===== 城市提示 ===== */
+.cityNote { font-size: 22rpx; color: var(--warn); background: var(--warn-bg); border: 1rpx solid var(--warn-line); border-radius: var(--r-sm); padding: 14rpx 20rpx; margin: 16rpx 0 4rpx; line-height: 1.5; }
+
+/* ===== ④主材 / ⑤施工 卡片内排版 ===== */
+.card .qh {
+  font-size: 30rpx; font-weight: 800; color: var(--text-1);
+  margin: 4rpx 0 18rpx; padding-left: 16rpx;
+  border-left: 8rpx solid var(--brand);
+}
+.card .qi {
+  padding: 16rpx 12rpx; border-bottom: 1rpx solid var(--line-soft);
+  border-radius: 12rpx; color: var(--text-1);
+}
+.card .qi.alt { background: var(--line-soft); }   /* 浅灰 / 白 分行 */
+.card .qi:last-of-type { border-bottom: none; }
+
+.mName { display: flex; align-items: center; flex-wrap: wrap; font-size: 28rpx; margin-bottom: 10rpx; }
+.mName .nm { font-weight: 600; }
+
+/* 工程量行：5 列均分（工程量 / 金额 / 合计 / 等比例 / 选品牌·采纳估算） */
+.grid { display: flex; align-items: stretch; }
+.col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6rpx; padding: 0 4rpx; }
+.cl { font-size: 20rpx; color: var(--text-3); }
+.cv { font-size: 26rpx; color: var(--text-1); display: flex; align-items: center; }
+.cv.sub { color: var(--price); font-weight: 600; }
+.cu { font-size: 20rpx; color: var(--text-3); margin-left: 4rpx; }
+.qe {
+  width: 96rpx; min-height: 44rpx; line-height: 44rpx;
+  border: 1rpx solid var(--line); border-radius: 10rpx; padding: 0 8rpx;
+  text-align: center; color: var(--text-1); background: #fff; font-size: 26rpx;
+}
+.qe:focus { border-color: var(--brand); }
+.pick {
+  font-size: 22rpx; color: var(--brand-deep); background: var(--brand-soft);
+  border: 1rpx solid var(--brand-line); border-radius: 999rpx; padding: 6rpx 16rpx;
+}
+.pick.on { color: #fff; background: var(--brand); border-color: var(--brand); }
+
+.tg {
+  display: inline-block; min-width: 44rpx; text-align: center; font-size: 22rpx;
+  padding: 4rpx 10rpx; border-radius: 8rpx; margin-right: 12rpx;
+  border: 1rpx solid var(--line); color: var(--text-3); background: var(--line-soft);
+}
+.tg.on { color: #1f8a70; border-color: #bfe6d8; background: #eaf7f1; }
+
+/* ===== 选品牌弹层（恢复 1.0） ===== */
+.mask { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, .45); display: flex; align-items: flex-end; z-index: 200; }
+.sheet { width: 100%; background: var(--card); border-radius: var(--r-lg) var(--r-lg) 0 0; padding: 32rpx 28rpx 40rpx; max-height: 76vh; overflow-y: auto; }
+.sheet .title { font-size: 30rpx; font-weight: 700; color: var(--brand-deep); margin-bottom: 16rpx; }
+.boptH { font-size: 22rpx; color: var(--text-3); margin: 10rpx 0 6rpx; }
+.bopt { display: flex; align-items: center; padding: 18rpx 16rpx; border-bottom: 1rpx solid var(--line-soft); }
+.boptImg { width: 72rpx; height: 72rpx; border-radius: 10rpx; margin-right: 16rpx; background: var(--line-soft); flex-shrink: 0; }
+.boptInfo { display: flex; flex-direction: column; }
+.bon { font-size: 28rpx; font-weight: 600; color: var(--text-1); }
+.bspec { font-size: 22rpx; color: var(--text-3); margin-top: 4rpx; }
+.bop { font-size: 24rpx; color: var(--price); margin-top: 4rpx; }
+.bopt.reset { justify-content: center; }
+.bopt.reset .bon { color: var(--brand-deep); }
+.bopt.tier { background: var(--brand-soft); border-radius: 12rpx; }
+.bopt.cur { border: 2rpx solid var(--brand); }
+.addwx { flex: none; margin-left: 12rpx; background: #07c160; color: #fff; border-radius: 999rpx; padding: 10rpx 22rpx; font-size: 24rpx; }
+.supplierEntry { margin-top: 24rpx; background: var(--brand-deep); color: #fff; text-align: center; border-radius: var(--r-md); padding: 22rpx 0; font-size: 28rpx; font-weight: 700; }
+
+.qsub { text-align: right; font-size: 26rpx; color: var(--text-2); margin-top: 16rpx; font-weight: 600; }
+.dedupNote { font-size: 22rpx; color: #1f8a70; background: #eaf7f1; border: 1rpx solid #bfe6d8; border-radius: 8rpx; padding: 12rpx 16rpx; margin-bottom: 12rpx; line-height: 1.5; }
+
+/* ===== ⑥ 合计高亮块 ===== */
+.totalCard {
+  background: var(--card); border: 2rpx solid var(--brand-line);
+  border-radius: var(--r-lg); padding: 26rpx 30rpx; margin: 20rpx 24rpx;
+  box-shadow: var(--shadow);
+}
+.tcRow { display: flex; justify-content: space-between; align-items: baseline; }
+.tcLabel { font-size: 28rpx; color: var(--text-2); }
+.tcVal { font-size: 46rpx; font-weight: 800; color: var(--price); }
+.tcVal.sm { font-size: 34rpx; }
+.tcRow.sub { margin-top: 12rpx; padding-top: 12rpx; border-top: 1rpx dashed var(--line); }
+.auxHint { font-size: 22rpx; color: var(--text-3); margin-top: 16rpx; line-height: 1.5; }
+
+/* ===== 底部按钮：等宽一行 ===== */
+.btnRow { display: flex; gap: 16rpx; margin-top: 24rpx; }
+.btnRow .btn { flex: 1; margin-top: 0; font-size: 26rpx; padding: 22rpx 0; line-height: 1.2; }
+.btn { color: #fff; font-weight: 700; text-align: center; border-radius: var(--r-md); }
+.genBtn { background: var(--brand-soft); color: var(--brand-deep); }
+.totalBtn { background: var(--brand); }
+.back { background: var(--brand-soft); color: var(--brand-deep); }
+
+/* ===== 未注册拦截遮罩 ===== */
+.regMask { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 100; }
+.regCard { width: 560rpx; background: var(--card); border-radius: var(--r-lg); padding: 48rpx 40rpx; box-shadow: var(--shadow); text-align: center; }
+.regTitle { font-size: 32rpx; font-weight: 700; color: var(--brand-deep); margin-bottom: 16rpx; }
+.regTip { font-size: 26rpx; color: var(--text-3); line-height: 1.6; margin-bottom: 32rpx; }
+.regMask .btn { background: var(--brand); color: #fff; font-weight: 700; }

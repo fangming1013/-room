@@ -1,0 +1,26 @@
+# ===== 备份与日志 =====
+*.bak
+*.log
+debug.log
+config.json.bak*
+
+# ===== 微信私有上传密钥（含上传私钥，勿入库）=====
+project.private.config.json
+
+# ===== 本地环境 / 依赖 =====
+.env
+.env.*
+node_modules/
+
+# ===== 系统文件 =====
+.DS_Store
+Thumbs.db
+
+# ===== 锁死的僵尸文件（无引用，系统 EPERM 读不了）=====
+utils/aux.js
+certs/
+*.pem
+*.p12
+
+# 订单/额度数据（含 openid，不入库）
+backend/data/

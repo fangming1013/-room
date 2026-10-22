@@ -1,0 +1,18 @@
+<view class="wrap">
+  <view class="head">我的效果图</view>
+  <view class="sub">生成过的效果图都留在这里，点小图看大图，可左右滑动切换</view>
+
+  <view wx:if="{{empty}}" class="empty">
+    <view class="e1">还没有效果图</view>
+    <view class="e2">在预算页选好风格、上传现场照片生成后，会自动收进这里</view>
+  </view>
+
+  <view wx:else class="grid">
+    <view wx:for="{{list}}" wx:key="ts" class="cell">
+      <image src="{{item.src}}" mode="aspectFill" class="thumb" data-i="{{index}}" bindtap="preview"/>
+      <view class="cap">{{item.spaceName}}<text wx:if="{{item.styleName}}"> · {{item.styleName}}</text></view>
+      <view class="cap2">{{item.date}}</view>
+      <view class="del" data-i="{{index}}" catchtap="del">删除</view>
+    </view>
+  </view>
+</view>

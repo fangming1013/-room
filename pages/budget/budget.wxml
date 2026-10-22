@@ -1,0 +1,112 @@
+<view class="wrap" wx:if="{{space}}">
+  <!-- 空间信息卡 -->
+  <view class="spaceCard">
+    <view class="scName">{{space.name}}</view>
+    <view class="scMeta">{{space.w}}×{{space.d}}×{{space.h}} cm　|　门：{{doorName}}　窗：{{winName}}</view>
+  </view>
+
+  <!-- 档位选择条 -->
+  <view class="tierBar">主材品牌档位：<text class="tn">{{tierName}}</text>{{threeTiers.length>1?'（点下方卡片可切换，单价与总价同步变化）':'（只列所选这一档，不展示其他档价格）'}}</view>
+  <view class="tiers">
+    <view wx:for="{{threeTiers}}" wx:key="key" class="tierCard {{item.key===space.tier?'on':''}}"
+          data-id="{{item.key}}" bindtap="switchTier">
+      <view class="tcName">{{item.name}}</view>
+      <view class="tcMat">主材 ¥{{item.matTotal}}</view>
+      <view class="tcLab">施工 ¥{{item.laborTotal}}</view>
+      <view class="tcTot">合计 ¥{{item.total}}</view>
+    </view>
+  </view>
+  <view class="cityNote">⚠️ 因城市差异会导致人工及材料成本差异，本报价仅供参考</view>
+
+  <!-- ④ 主材明细（可手填工程量 / 选品牌 / 算法·手填 徽标） -->
+  <view class="card">
+    <view class="qh">④ 主材明细（{{tierName}}）</view>
+    <view wx:for="{{matView}}" wx:key="idx" class="qi {{index%2===1?'alt':''}}">
+      <view class="mName">
+        <text class="nm">{{item.name}}</text>
+        <text wx:if="{{item.brand}}" class="badge">{{item.brand}}·广告</text>
+        <text wx:if="{{item.auto}}" class="badge alg">算法</text>
+        <text wx:if="{{item.manual}}" class="badge mf">手填</text>
+      </view>
+      <view class="grid">
+        <view class="col"><text class="cl">工程量</text><view class="cv"><input class="qe" type="digit" value="{{item.qtyText}}" data-idx="{{item.idx}}" bindinput="onQty" bindblur="onQtyBlur"/><text class="cu">{{item.unit}}</text></view></view>
+        <view class="col"><text class="cl">金额</text><text class="cv">¥{{item.price}}</text></view>
+        <view class="col"><text class="cl">合计</text><text class="cv sub">¥{{item.sub}}</text></view>
+        <view class="col"><text class="cl">等比例</text><text class="cv">{{item.pct}}%</text></view>
+        <view class="col"><text class="cl">选品牌</text><text class="pick {{item.brand?'on':''}}" data-idx="{{item.idx}}" bindtap="openBrand">{{item.brand?'换':'选'}}品牌</text></view>
+      </view>
+    </view>
+    <view class="qsub">主材小计：¥{{quote.matTotal}}</view>
+  </view>
+
+  <!-- ⑤ 施工项目（可手填工程量 / 采纳估算；开/关已移除，施工项恒开启） -->
+  <view class="card">
+    <view class="qh">⑤ 施工项目</view>
+    <view wx:if="{{quote.demoDedupOn}}" class="dedupNote">✓ 已选择「全屋拆除」，本空间「墙地砖整体拆除」工程量按 0 计，不重复收费</view>
+    <view wx:for="{{laborView}}" wx:key="idx" class="qi {{index%2===1?'alt':''}}">
+      <view class="mName">
+        <text class="nm">{{item.name}}</text>
+        <text wx:if="{{item.auto}}" class="badge alg">算法</text>
+        <text wx:if="{{item.manual}}" class="badge mf">手填</text>
+      </view>
+      <view class="grid">
+        <view class="col"><text class="cl">工程量</text><view class="cv"><input class="qe" type="digit" value="{{item.qtyText}}" data-idx="{{item.idx}}" bindinput="onLaborQty" bindblur="onLaborQtyBlur"/><text class="cu">{{item.unit}}</text></view></view>
+        <view class="col"><text class="cl">金额</text><text class="cv">¥{{item.price}}</text></view>
+        <view class="col"><text class="cl">合计</text><text class="cv sub">¥{{item.sub}}</text></view>
+        <view class="col"><text class="cl">等比例</text><text class="cv">{{item.pct}}%</text></view>
+        <view class="col"><text class="cl">采纳估算</text><text class="pick" data-idx="{{item.idx}}" data-kind="l" bindtap="onEstimate">采纳</text></view>
+      </view>
+    </view>
+    <view class="qsub">施工小计：¥{{quote.laborTotal}}</view>
+  </view>
+
+  <!-- ⑥ 合计 -->
+  <view class="totalCard">
+    <view class="tcRow">
+      <text class="tcLabel">本空间预估合计</text>
+      <text class="tcVal">¥{{quote.total}}</text>
+    </view>
+    <view wx:if="{{projectCount>1}}" class="tcRow sub">
+      <text class="tcLabel">全屋已录入 {{projectCount}} 个空间，合计</text>
+      <text class="tcVal sm">¥{{projectGrand}}</text>
+    </view>
+    <view class="auxHint">辅助费用（运输 / 垃圾 / 保护 / 保洁等）统一在「总预算」页以表格展示</view>
+  </view>
+
+  <view class="btnRow">
+    <button class="btn genBtn" bindtap="toResult">生成空间效果图</button>
+    <button class="btn totalBtn" bindtap="toSummary">查看总预算（多空间汇总）</button>
+    <button class="btn back" bindtap="back">返回</button>
+  </view>
+</view>
+
+<!-- 选品牌弹窗：三档报价可点选替换整空间报价 + 已入驻材料商 + 材料商入驻 -->
+<view wx:if="{{brandSheet.show}}" class="mask" bindtap="closeBrand">
+  <view class="sheet" catchtap="noop">
+    <view class="title">选「{{brandSheet.matName}}」的品牌 / 档位</view>
+    <view class="boptH">档位报价（点选即替换整空间报价）</view>
+    <view wx:for="{{brandSheet.options}}" wx:key="key" class="bopt {{item.kind==='tier'?'tier':''}} {{item.cur?'cur':''}}" data-i="{{index}}" bindtap="pickSheet">
+      <image wx:if="{{item.image}}" src="{{item.image}}" class="boptImg" mode="aspectFill"/>
+      <view class="boptInfo">
+        <text class="bon">{{item.name}}{{item.ad?'（广告）':''}}{{item.cur?' · 当前档':''}}</text>
+        <text wx:if="{{item.spec}}" class="bspec">{{item.spec}}</text>
+        <text class="bop">{{item.kind==='tier' ? '¥'+item.price+' / 整空间切到此档' : '¥'+item.price+(item.unit?('/'+item.unit):'')+' · 材料商'}}</text>
+      </view>
+      <view wx:if="{{item.qrCode}}" class="addwx" data-url="{{item.qrCode}}" catchtap="showQR">加微信</view>
+    </view>
+    <view class="bopt reset" bindtap="resetBrand"><text class="bon">清除品牌（用档位价）</text></view>
+    <view class="btn supplierEntry" bindtap="toSupplier">材料商入驻（上架新品牌）</view>
+    <view class="btn ghost" bindtap="closeBrand">关闭</view>
+  </view>
+</view>
+
+<!-- 未注册拦截遮罩：进入报价页要求先注册，注册后完整展示预算 -->
+<view wx:if="{{space && !registered}}" class="regMask">
+  <view class="regCard">
+    <view class="regTitle">查看完整预算需先注册</view>
+    <view class="regTip">注册后可保存预算、接收报价与效果图，便于后续对接装修公司</view>
+    <button class="btn" bindtap="goRegister">去注册</button>
+  </view>
+</view>
+
+<view wx:else class="wrap"><view class="head">暂无数据，请先录入空间</view></view>

@@ -1,0 +1,56 @@
+<view class="pg">
+  <!-- 顶部自定义导航（全屏） -->
+  <view class="top" style="padding-top:{{statusBar}}px;">
+    <view class="back" bindtap="goBack">‹ 返回</view>
+    <view class="tt">手绘户型 · {{name}}</view>
+    <view class="reset" bindtap="reset">重置</view>
+  </view>
+  <view class="info">{{dInfo}}</view>
+
+  <!-- 全屏画布 -->
+  <canvas canvas-id="cv" id="cv" class="cv" disable-scroll="true"
+          bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd"></canvas>
+
+  <!-- 底部录入栏：门/墙/窗三选一 + 长度 -->
+  <view class="panel" wx:if="{{showPanel}}">
+    <view class="pnT">第 {{edgeNo}} 段{{isClosing?'（闭合）':''}} · 选类型并输入长度</view>
+    <view class="pnRow">
+      <text class="pl">长</text>
+      <input class="pnLen" type="digit" value="{{lenVal}}" bindinput="onLen" placeholder="米"/>
+      <text class="pu">米</text>
+      <view class="types">
+        <view class="t {{typeVal==='wall'?'on':''}}" data-t="wall" bindtap="chooseType">墙</view>
+        <view class="t {{typeVal==='win'?'on':''}}" data-t="win" bindtap="chooseType">窗</view>
+        <view class="t {{typeVal==='door'?'on':''}}" data-t="door" bindtap="chooseType">门</view>
+      </view>
+    </view>
+    <view class="pnRow2">
+      <view class="pc cancel" bindtap="cancel">取消</view>
+      <view class="pc undo {{canUndo?'':'dis'}}" bindtap="undo">↩撤销</view>
+      <view class="pc ok" bindtap="confirm">确定</view>
+    </view>
+  </view>
+
+  <!-- 未录入时底部提示栏 -->
+  <view class="panel ghost" wx:elif="{{!closed}}">
+    <view class="ph">{{dInfo2}}</view>
+    <view class="ctrlRow">
+      <view class="ctrl perp {{perpOn?'on':''}}" bindtap="togglePerp">{{perpOn?'✓ 垂直吸附(轴对齐)':'取消垂直(自由角)'}}</view>
+      <view class="ctrl dir {{dirMode==='extend'?'on':''}}" data-m="extend" bindtap="setDir">延伸</view>
+      <view class="ctrl dir {{dirMode==='perp'?'on':''}}" data-m="perp" bindtap="setDir">垂直</view>
+    </view>
+    <view class="pnRow2">
+      <view class="pc undo {{canUndo?'':'dis'}}" bindtap="undo">↩撤销</view>
+      <view class="pc ok {{segCount>=3?'':'dis'}}" bindtap="finishClosing">✅ 完成闭合</view>
+    </view>
+  </view>
+
+  <!-- 已闭合：确认完成（进入下一步生成图纸/预算） -->
+  <view class="panel done" wx:else>
+    <view class="doneT">✅ 户型已闭合（{{segCount}}段）· 可生成图纸与预算</view>
+    <view class="pnRow2">
+      <view class="pc cancel" bindtap="undo">↩ 修改一段</view>
+      <view class="pc ok" bindtap="doComplete">确认完成 →</view>
+    </view>
+  </view>
+</view>

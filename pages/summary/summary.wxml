@@ -1,0 +1,85 @@
+<view class="wrap">
+  <view class="hero">
+    <view class="ht">我家装修多少钱 · 总预算</view>
+    <view class="hsub">已录入 {{count}} 个空间，每个空间含独立图纸与预算</view>
+  </view>
+
+  <view wx:if="{{readOnly}}" class="roBanner">
+    📋 只读记录（来自「我的记录」）
+    <view wx:if="{{cust}}" class="roMeta">客户：{{cust}}　电话：{{phone}}</view>
+    <view wx:if="{{address}}" class="roMeta">工程地址：{{address}}</view>
+  </view>
+
+  <view class="grand">
+    <view class="gt">预估总预算</view>
+    <view class="gn">¥{{grand}}</view>
+    <view class="gs">主材 ¥{{matGrand}} ＋ 施工 ¥{{laborGrand}} ＋ 辅助 ¥{{auxFixedSub}}</view>
+  </view>
+
+  <view class="cityNote">⚠️ 因城市差异会导致人工及材料成本差异，本预算仅供参考</view>
+
+  <view wx:if="{{count===0}}" class="empty">
+    还没有空间，去首页录入一个空间吧。
+    <button class="add" bindtap="addMore">去录入</button>
+  </view>
+
+  <view wx:for="{{rows}}" wx:key="idx" class="srow">
+    <view class="shead">
+      <text class="sname">{{item.name}}</text>
+      <text class="sdim">{{item.dim}}</text>
+    </view>
+    <view class="sbody" data-idx="{{item.idx}}" bindtap="viewBudget">
+      <text class="sc">主材 ¥{{item.matTotal}}</text>
+      <text class="sc">施工 ¥{{item.laborTotal}}</text>
+      <text class="st">小计 ¥{{item.total}}</text>
+      <text class="stip">点此看分项明细 ›</text>
+    </view>
+    <view wx:if="{{item.dedup}}" class="sdedup">✓ 已含全屋拆除，本空间「墙地砖整体拆除」工程量按 0 计</view>
+    <view class="sacts">
+      <view class="sbtn" data-idx="{{item.idx}}" bindtap="viewRender">查看图纸</view>
+      <view class="sbtn" data-idx="{{item.idx}}" bindtap="viewBudget">查看分项</view>
+    </view>
+  </view>
+
+  <view class="card summaryAux">
+    <view class="qh">辅助项目（全屋统一计一次）</view>
+    <block wx:if="{{!readOnly}}">
+    <view wx:for="{{auxTable}}" wx:key="id" class="qi">
+      <text>{{item.name}}</text>
+      <view wx:if="{{item.edit==='qty'}}" class="qi-r">
+        <input class="tin" type="digit" value="{{auxText[item.id] || item.qty}}" data-id="{{item.id}}" bindinput="onAuxQty" bindblur="onAuxQtyBlur"/>{{item.unit}} × {{item.price}} = ¥{{item.sub}}
+      </view>
+      <text wx:else class="qi-r">{{item.disp || item.qty}}{{item.unit}} × {{item.price}} = ¥{{item.sub}}</text>
+    </view>
+    <view class="qsub">辅助小计（含运输）：¥{{auxFixedSub}}</view>
+    <view class="qsub">预算合计（含辅助，税/管前）：¥{{sumBeforeTax}}</view>
+    </block>
+    <block wx:else>
+      <view class="qsub">辅助小计（含运输/垃圾/保护/保洁等）：¥{{auxFixedSub}}</view>
+      <view class="qsub">税金：¥{{taxAmt}}　管理费：¥{{mgrAmt}}</view>
+      <view class="qsub">预算合计（含辅助，税/管前）：¥{{sumBeforeTax}}</view>
+    </block>
+
+    <block wx:if="{{!readOnly}}">
+    <view class="qh">税金与管理费</view>
+    <view class="qi">
+      <view class="qname">
+        <text>税金</text>
+        <switch class="tsw" checked="{{fee.taxOn}}" bindchange="onTaxToggle" color="#10B981"/>
+      </view>
+      <view wx:if="{{fee.taxOn}}" class="qi-r">基数¥{{taxBase}} × <input class="tin" type="digit" value="{{fee.taxPct}}" bindinput="onTaxPct"/>% = ¥{{taxAmt}}</view>
+      <view wx:else class="qi-r">已取消</view>
+    </view>
+    <view class="qi">
+      <text>工程管理费</text>
+      <view class="qi-r">基数¥{{mgrBase}} × <input class="tin" type="digit" value="{{fee.mgrPct}}" bindinput="onMgrPct"/>% = ¥{{mgrAmt}}</view>
+    </view>
+    </block>
+
+    <view class="qt">总预算（含税金及管理费）：<text>¥{{grand}}</text></view>
+  </view>
+
+  <button wx:if="{{!readOnly}}" class="add ok" bindtap="saveToRecords">保存到我的记录</button>
+  <button wx:if="{{readOnly}}" class="add" bindtap="backToRecords">← 返回我的记录</button>
+  <button class="add" bindtap="addMore">＋ 继续添加空间</button>
+</view>

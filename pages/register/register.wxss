@@ -1,0 +1,42 @@
+.wrap { padding: 32rpx 28rpx 60rpx; }
+.head { font-size: 40rpx; font-weight: 800; color: var(--brand-deep); }
+.sub { font-size: 24rpx; color: var(--text-3); margin: 10rpx 0 24rpx; line-height: 1.5; }
+
+.card { background: var(--card); border-radius: var(--r-lg); padding: 24rpx 28rpx; margin-bottom: 22rpx; box-shadow: var(--shadow); }
+.ctitle { font-size: 27rpx; font-weight: 700; color: var(--text-1); margin-bottom: 18rpx; display: flex; align-items: center; }
+.req { font-size: 20rpx; font-weight: 400; color: #fff; background: #F59E0B; border-radius: 6rpx; padding: 2rpx 8rpx; margin-left: 10rpx; }
+
+/* 城市快选 */
+.chips { display: flex; flex-wrap: wrap; }
+.chip { font-size: 26rpx; color: var(--text-2); background: #F3F5F4; border: 1rpx solid transparent; border-radius: 999rpx; padding: 12rpx 26rpx; margin: 0 14rpx 14rpx 0; }
+.chip.on { color: #fff; background: var(--brand); border-color: var(--brand); font-weight: 700; }
+.inp.other { margin-top: 6rpx; font-size: 28rpx; color: var(--text-1); background: #F3F5F4; border-radius: var(--r-md); padding: 16rpx 20rpx; }
+
+/* 整装 / 局改 */
+.types { display: flex; }
+.type { flex: 1; border: 2rpx solid var(--line); border-radius: var(--r-md); padding: 22rpx 18rpx; margin-right: 16rpx; background: #fff; }
+.type:last-child { margin-right: 0; }
+.type.on { border-color: var(--brand); background: #ECFDF5; }
+.tname { font-size: 32rpx; font-weight: 800; color: var(--text-1); }
+.type.on .tname { color: var(--brand-deep); }
+.tdesc { font-size: 21rpx; color: var(--text-3); margin-top: 8rpx; line-height: 1.4; }
+
+/* 表单行 */
+.row { display: flex; align-items: center; padding: 20rpx 0; border-bottom: 1rpx solid var(--line-soft); }
+.row:last-child { border-bottom: none; }
+.lbl { width: 120rpx; font-size: 28rpx; color: var(--text-2); }
+.inp { flex: 1; font-size: 28rpx; color: var(--text-1); }
+.val { flex: 1; font-size: 28rpx; color: var(--text-1); font-weight: 600; }
+.val.light { color: var(--text-3); font-weight: 400; }
+.edit { font-size: 24rpx; color: var(--brand); padding: 4rpx 0 4rpx 20rpx; }
+.hint { font-size: 21rpx; color: var(--text-3); padding-bottom: 8rpx; }
+
+.btn.ok { background: var(--brand); color: #fff; font-size: 30rpx; border-radius: var(--r-md); padding: 22rpx 0; margin-top: 12rpx; }
+.btn.ok.dis { background: #C9D2CE; color: #fff; }
+.btn.ok::after { border: none; }
+
+.tip { font-size: 22rpx; color: var(--text-3); text-align: center; margin-top: 18rpx; }
+.agree { font-size: 23rpx; color: var(--text-3); text-align: center; margin-top: 24rpx; }
+.link { color: var(--brand); }
+.manual { font-size: 24rpx; color: var(--brand); text-align: center; margin-top: 24rpx; text-decoration: underline; }
+.err { font-size: 24rpx; color: var(--danger); text-align: center; margin-top: 18rpx; line-height: 1.5; }

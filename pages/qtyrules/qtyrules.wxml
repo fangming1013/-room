@@ -1,0 +1,40 @@
+<view class="page">
+  <view class="head">
+    <view class="ht">工程量算法参数</view>
+    <view class="hs">只改算法参数，不碰项目/价格数据。保存后录入页「算」按钮立即按新参数估算。</view>
+  </view>
+
+  <view class="tools">
+    <button class="tbtn try" bindtap="onPreview">试算核对</button>
+    <button class="tbtn reset" data-space="kitchen" bindtap="onRules">厨房规则清单</button>
+    <button class="tbtn reset" data-space="bathroom" bindtap="onRules">卫生间规则清单</button>
+    <button class="tbtn reset" bindtap="onReset">恢复默认</button>
+  </view>
+
+  <view wx:for="{{groups}}" wx:key="title" class="card">
+    <view class="gt">{{item.title}}</view>
+    <view wx:if="{{item.note}}" class="gn">{{item.note}}</view>
+    <view wx:for="{{item.fields}}" wx:for-item="f" wx:key="path" class="row">
+      <view class="rl">
+        <text class="lab">{{f.label}}</text>
+        <text wx:if="{{f.note}}" class="note">{{f.note}}</text>
+      </view>
+      <view class="rr">
+        <view wx:if="{{f.type === 'num'}}" class="numwrap">
+          <input class="num" type="digit" value="{{f.value}}" data-path="{{f.path}}" bindinput="onNum" bindblur="onBlur"/>
+          <text class="unit">{{f.unit}}</text>
+        </view>
+        <switch wx:elif="{{f.type === 'sw'}}" checked="{{f.value}}" data-path="{{f.path}}" bindchange="onSwitch" color="#10B981"/>
+        <view wx:elif="{{f.type === 'sel'}}" class="chips">
+          <view wx:for="{{f.options}}" wx:for-item="op" wx:for-index="oi" wx:key="*this"
+                class="chip {{f.value === op ? 'on' : ''}}" data-path="{{f.path}}" data-v="{{op}}" bindtap="onSelect">{{f.names[oi]}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="foot">
+    <view wx:if="{{msg}}" class="msg">{{msg}}</view>
+    <button class="save" bindtap="onSave">保存并生效</button>
+  </view>
+</view>

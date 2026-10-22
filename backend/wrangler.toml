@@ -1,0 +1,19 @@
+name = "room-mini-proxy"
+main = "worker.js"
+compatibility_date = "2024-12-01"
+
+# 非敏感配置写这里；敏感项用 `wrangler secret put` 设置（见下方注释）
+[vars]
+SILICONFLOW_API_BASE = "https://api.siliconflow.cn"
+WX_APP_ID = "wx89952f3a02cdc470"
+
+# ===== 需要你本地用命令填的 secret（不要写在这里，会进版本库）=====
+# 生图必须：
+#   npx wrangler secret put SILICONFLOW_API_KEY      # 填硅基流动 sk-xxx
+# 微信支付正式收费必须（商户号下来后）：
+#   npx wrangler secret put WX_APP_SECRET
+#   npx wrangler secret put WX_MCH_ID
+#   npx wrangler secret put WX_API_V3_KEY
+#   npx wrangler secret put WX_CERT_SERIAL
+#   npx wrangler secret put WX_PRIVATE_KEY           # 注意：须是 PKCS#8 格式（openssl pkcs8 -topk8 -nocrypt 转换后）
+#   npx wrangler secret put WX_NOTIFY_URL

@@ -1,0 +1,90 @@
+<view class="wrap">
+  <view class="hero">材料商入驻</view>
+  <view class="sub1">注册品牌并填价，消费者在「我家装修多少钱」选品牌时可见（带广告标）。统一入驻费 300元/月 或 3000元/年，可同时上传经济 / 舒适 / 轻奢多款产品，无需按档位分别付费。</view>
+
+  <!-- ① 公司/品牌信息 -->
+  <view class="card">
+    <view class="title">① 公司/品牌信息</view>
+    <view class="row"><text class="lbl">名称</text><input class="inp" placeholder="公司或品牌名" value="{{supplier}}" bindinput="onSupplier"/></view>
+    <view class="row"><text class="lbl">联系人</text><input class="inp" placeholder="联系人" value="{{contact}}" bindinput="onContact"/></view>
+    <view class="row"><text class="lbl">电话</text><input class="inp" type="number" placeholder="联系电话" value="{{phone}}" bindinput="onPhone"/></view>
+    <view class="row col">
+      <text class="lbl">微信二维码</text>
+      <view class="qrBox" bindtap="chooseQR">
+        <image wx:if="{{qrCode}}" src="{{qrCode}}" mode="aspectFill" class="qrImg"/>
+        <view wx:else class="qrEmpty">＋ 上传微信二维码</view>
+      </view>
+      <text class="tip">客户在选品牌时可扫码加你微信</text>
+    </view>
+  </view>
+
+  <!-- ② 入驻费用（统一价）-->
+  <view class="card">
+    <view class="title">② 入驻费用（统一价，不分一线/二线）</view>
+    <view class="chips">
+      <view wx:for="{{feePlans}}" wx:key="id" class="chip {{feePlan===item.id?'on':''}}" data-id="{{item.id}}" bindtap="selectFee">{{item.label}}</view>
+    </view>
+  </view>
+
+  <!-- ③ 添加产品（可多款，含经济/舒适/轻奢）-->
+  <view class="card">
+    <view class="title">③ 添加产品（可多款，支持经济 / 舒适 / 轻奢）</view>
+    <view class="row"><text class="lbl">材料</text><picker range="{{matRange}}" value="{{pMatIdx}}" bindchange="selectPMat" class="picker">{{matRange[pMatIdx]}}</picker></view>
+    <view class="row"><text class="lbl">品牌</text><input class="inp" placeholder="如：欧派 / 马可波罗" value="{{pBrand}}" bindinput="onPBrand"/></view>
+    <view class="row">
+      <text class="lbl">单价</text>
+      <input class="inp" type="digit" placeholder="0" value="{{pPrice}}" bindinput="onPPrice"/>
+      <text class="u">元/</text>
+      <picker range="{{units}}" value="{{unitIdx<0?0:unitIdx}}" bindchange="selectPUnit" class="upicker {{unitIdx<0?'ph':''}}">{{unitIdx<0?'选单位':units[unitIdx]}}</picker>
+    </view>
+    <view class="row"><text class="lbl">规格</text><input class="inp" placeholder="如：800×800 抛釉" value="{{pSpec}}" bindinput="onPSpec"/></view>
+    <view class="row"><text class="lbl">档位</text>
+      <view class="chips">
+        <view wx:for="{{tiers}}" wx:key="id" class="chip {{pTier===item.id?'on':''}}" data-id="{{item.id}}" bindtap="selectPTier">{{item.name}}</view>
+      </view>
+    </view>
+    <view class="row col">
+      <text class="lbl">产品图</text>
+      <view class="imgGrid">
+        <view wx:for="{{pImages}}" wx:key="*this" class="thumb">
+          <image src="{{item}}" mode="aspectFill" class="thumbImg"/>
+          <view class="del" data-idx="{{index}}" bindtap="removePImg">×</view>
+        </view>
+        <view wx:if="{{pImages.length<5}}" class="thumb add" bindtap="choosePImg">＋</view>
+      </view>
+      <text class="tip">最多 5 张，自动压缩到手机能看清</text>
+    </view>
+    <button class="btn addP" bindtap="addProduct">＋ 加入此产品</button>
+  </view>
+
+  <!-- 已添加产品 -->
+  <view class="card" wx:if="{{products.length}}">
+    <view class="title">已添加产品（{{products.length}}）</view>
+    <view wx:for="{{products}}" wx:key="index" class="prod">
+      <view class="r1"><text class="rn">{{item.brand}}</text><text class="rt">{{item.materialName}} · {{item.tier==='top'?'轻奢':(item.tier==='mid'?'舒适':'经济')}}</text></view>
+      <view class="r2"><text>¥{{item.price}}/{{item.unit}}</text><text class="tag" wx:if="{{item.spec}}">{{item.spec}}</text></view>
+      <view wx:if="{{item.images.length}}" class="r3">
+        <image wx:for="{{item.images}}" wx:for-item="im" wx:key="*this" src="{{im}}" mode="aspectFill" class="miniImg"/>
+      </view>
+      <view class="del2" data-idx="{{index}}" bindtap="removeProduct">删除</view>
+    </view>
+  </view>
+
+  <button class="btn submit" bindtap="submit">提交并等待管理员审核上架</button>
+
+  <!-- 已提交品牌 -->
+  <view class="card" wx:if="{{list.length}}">
+    <view class="title">已提交（{{list.length}}）</view>
+    <view wx:for="{{list}}" wx:key="id" class="rec">
+      <view class="r1"><text class="rn">{{item.supplier}}</text><text class="st {{item.status==='on'?'ok':(item.status==='pending'?'wt':'off')}}">{{item.status==='on'?'已上架':(item.status==='pending'?'待审核':'已驳回')}}</text></view>
+      <view class="r2"><text>入驻费：{{item.feePlan==='year'?'3000元/年':'300元/月'}}</text><text>产品 {{item.products.length}} 款</text></view>
+      <view wx:if="{{item.qrCode}}" class="r3"><image src="{{item.qrCode}}" mode="aspectFill" class="miniQR"/></view>
+      <view wx:if="{{item.products.length}}" class="r3">
+        <text wx:for="{{item.products}}" wx:for-item="p" wx:key="index">{{p.brand}}({{p.tier==='top'?'轻奢':(p.tier==='mid'?'舒适':'经济')}}·¥{{p.price}}/{{p.unit}}) </text>
+      </view>
+      <view class="pay" data-id="{{item.id}}" bindtap="payAd">缴纳入驻费上架</view>
+    </view>
+  </view>
+
+  <view class="foot">说明：当前为本地演示，数据存本机；接后端 /api/supplier/* 与微信支付后，按统一入驻费扣费、管理员审核费用到账与资料完整后对外展示。</view>
+</view>

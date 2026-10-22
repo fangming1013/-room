@@ -1,0 +1,53 @@
+{
+  "description": "声控量房小程序（已认证账号 wx89952f3a02cdc470 + 同声传译插件）",
+  "appid": "wx89952f3a02cdc470",
+  "compileType": "miniprogram",
+  "libVersion": "3.0.0",
+  "projectname": "room-mini",
+  "setting": {
+    "es6": true,
+    "minified": false,
+    "postcss": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "enhance": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [
+      { "type": "folder", "value": "docs" },
+      { "type": "file", "value": "utils/aux.js" },
+      { "type": "prefix", "value": "config.json.bak" },
+      { "type": "prefix", "value": "config.json.bak2" },
+      { "type": "prefix", "value": "config.json.bak3" },
+      { "type": "prefix", "value": "config.json.bak4" },
+      { "type": "prefix", "value": "config.json.bak5" },
+      { "type": "prefix", "value": "utils/config.js.bak" },
+      { "type": "prefix", "value": "utils/config.js.bak2" },
+      { "type": "prefix", "value": "utils/config.js.bak3" },
+      { "type": "prefix", "value": "utils/config.js.bak4" },
+      { "type": "prefix", "value": "utils/config.js.bak5" },
+      { "type": "prefix", "value": "utils/config.js.bak6" },
+      { "type": "prefix", "value": "utils/estimate.js.bak6" },
+      { "type": "prefix", "value": "debug.log" }
+    ],
+    "include": []
+  },
+  "editorSetting": {}
+}

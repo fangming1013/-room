@@ -1,0 +1,5 @@
+.wrap { padding: 28rpx 32rpx 60rpx; }
+.h1 { font-size: 36rpx; font-weight: 700; color: #1f2937; margin: 8rpx 0 20rpx; }
+.h2 { font-size: 30rpx; font-weight: 600; color: #10B981; margin: 28rpx 0 10rpx; }
+.p { font-size: 27rpx; line-height: 1.7; color: #374151; margin: 6rpx 0; }
+.date { font-size: 24rpx; color: #9ca3af; margin-bottom: 10rpx; }

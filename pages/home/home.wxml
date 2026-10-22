@@ -1,0 +1,60 @@
+<view class="wrap">
+  <view class="hero">
+    <view class="logo" bindtap="onLogoTap">算一算</view>
+    <view class="slogan">我家局部装修多少钱？</view>
+  </view>
+
+  <view class="userbar">
+    <block wx:if="{{user}}">
+      <text class="hi">您好，{{user.name}}（{{user.phone}}）</text>
+      <view class="ubtn" bindtap="goHistory">我的记录</view>
+    </block>
+    <block wx:else>
+      <text class="hi">您还未注册</text>
+      <view class="ubtn reg" bindtap="goRegister">注册/登录</view>
+    </block>
+  </view>
+
+  <view wx:if="{{needProfile}}" class="profTip" bindtap="goRegister">完善装修信息（整装/局改 · 面积），报价更准确 ›</view>
+
+  <view class="entry voice" bindtap="goVoice">
+    <view class="eicon">🎤</view>
+    <view class="etxt">
+      <view class="etitle">语音录入（推荐）</view>
+      <view class="edesc">按住说话报尺寸，自动识别空间/长宽高/门窗，秒出「经济/舒适/轻奢」三档报价</view>
+    </view>
+    <view class="earrow">›</view>
+  </view>
+
+  <view wx:if="{{projectCount>0}}" class="proj">
+    <view class="ptitle">我的预算清单（{{projectCount}} 个空间）</view>
+    <view class="ptotal">当前总预算：<text class="pn">¥{{projectTotal}}</text></view>
+    <view wx:if="{{auxTotal>0}}" class="paddr">其中辅助/税/管理费：¥{{auxTotal}}</view>
+    <view wx:if="{{address}}" class="paddr">工程地址：{{address}}</view>
+    <button class="pbtn" bindtap="goSummary">查看图纸与分项预算</button>
+    <view class="preset" bindtap="reset">清空重来</view>
+  </view>
+
+  <view class="entry gal" bindtap="goGallery">
+    <view class="eicon">🖼️</view>
+    <view class="etxt">
+      <view class="etitle">我的效果图</view>
+      <view class="edesc">{{galleryCount>0 ? '已保存 ' + galleryCount + ' 张效果图，点开看大图' : '生成过的效果图都保留在这里'}}</view>
+    </view>
+    <view class="earrow">›</view>
+  </view>
+
+  <view class="foot">语音与手动两种方式都先生成「单空间图纸 + 预算」，可叠加多个空间汇总成总预算</view>
+
+  <button class="shareBtn" open-type="share">分享给好友 / 朋友圈</button>
+
+  <!-- 管理后台：仅本机解锁过口令后显示（新设备连点 logo 5 次唤起），普通用户不可见 -->
+  <view wx:if="{{isAdmin}}" class="entry adm" bindtap="goAdmin">
+    <view class="eicon">⚙️</view>
+    <view class="etxt">
+      <view class="etitle">管理后台</view>
+      <view class="edesc">价格与项目管理</view>
+    </view>
+    <view class="earrow">›</view>
+  </view>
+</view>

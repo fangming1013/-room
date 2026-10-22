@@ -1,0 +1,13 @@
+{
+  "name": "room-mini-img-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "硅基流动 AI 生图代理（key 仅存服务端，供微信小程序快速模式调用）",
+  "main": "img-proxy.js",
+  "scripts": {
+    "start": "node img-proxy.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

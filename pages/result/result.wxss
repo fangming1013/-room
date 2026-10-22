@@ -1,0 +1,117 @@
+.wrap { padding: 24rpx 24rpx 60rpx; }
+.head { font-size: 30rpx; font-weight: 600; color: var(--text-1); background: var(--card); border-radius: var(--r-md); padding: 20rpx 24rpx; margin-bottom: 16rpx; box-shadow: var(--shadow); }
+.tierBar { font-size: 26rpx; color: var(--text-2); background: var(--card); border-radius: var(--r-md); padding: 16rpx 24rpx; margin-bottom: 16rpx; box-shadow: var(--shadow); }
+.tierBar .tn { color: var(--brand-deep); font-weight: 700; }
+.badge { font-size: 20rpx; color: var(--warn); background: var(--warn-bg); border: 1rpx solid var(--warn-line); border-radius: 8rpx; padding: 2rpx 10rpx; margin-left: 10rpx; }
+.badge.mf { color: #fff; background: #ff9f43; border-color: #ff9f43; }
+
+/* ④主材 / ⑤施工 手填工程量输入框 */
+.qe { display: inline-block; width: 120rpx; min-height: 40rpx; line-height: 40rpx; border: 1rpx solid var(--line); border-radius: 8rpx; padding: 0 10rpx; margin: 0 8rpx; text-align: center; color: var(--text-1); background: var(--bg); vertical-align: middle; }
+
+.tabs { display: flex; background: var(--card); border-radius: var(--r-md); overflow: hidden; margin-bottom: 16rpx; box-shadow: var(--shadow); }
+.tab { flex: 1; text-align: center; padding: 24rpx 0; font-size: 28rpx; color: var(--text-2); }
+.tab.on { background: var(--brand); color: #fff; }
+
+.view { background: var(--card); border-radius: var(--r-lg); padding: 28rpx; box-shadow: var(--shadow); }
+.plan { width: 330px; height: 240px; margin: 0 auto; }
+.img { width: 100%; border-radius: var(--r-md); }
+.hint { font-size: 24rpx; color: var(--text-3); text-align: center; margin-top: 12rpx; }
+.hint.soon { font-size: 28rpx; color: var(--brand-deep); font-weight: 600; padding: 10rpx 0 4rpx; }
+
+.qi { display: flex; justify-content: space-between; font-size: 28rpx; padding: 16rpx 0; border-bottom: 1rpx solid var(--line-soft); color: var(--text-1); }
+.qi-r { color: var(--text-3); }
+.qt { text-align: right; font-size: 30rpx; margin-top: 16rpx; color: var(--text-2); }
+.qt text { color: var(--price); font-weight: 700; font-size: 38rpx; }
+.qt.grand { background: var(--brand-soft); border: 2rpx solid var(--brand-line); border-radius: var(--r-md); padding: 18rpx 22rpx; }
+.cityNote { font-size: 22rpx; color: var(--warn); background: var(--warn-bg); border: 1rpx solid var(--warn-line); border-radius: var(--r-sm); padding: 14rpx 20rpx; margin: 14rpx 0 4rpx; line-height: 1.5; }
+.back { margin-top: 24rpx; background: var(--brand-soft); color: var(--brand-deep); }
+.edit { margin-top: 16rpx; background: var(--brand-deep); color: #fff; font-weight: 700; }
+
+/* 底部按钮：等宽一行 */
+.btnRow { display: flex; gap: 16rpx; margin-top: 24rpx; }
+.btnRow .btn { flex: 1; margin-top: 0; font-size: 26rpx; padding: 22rpx 0; line-height: 1.2; text-align: center; border-radius: var(--r-md); }
+.btnRow .back { background: var(--brand-soft); color: var(--brand-deep); }
+.btnRow .totalBtn { background: var(--brand); color: #fff; }
+
+/* 分享按钮 */
+.shareBtn { margin-top: 24rpx; background: var(--brand); color: #fff; font-size: 28rpx; font-weight: 700; border-radius: var(--r-md); padding: 22rpx 0; line-height: 1.2; text-align: center; }
+
+/* 现场照片上传区样式（沿用下方通用卡片） */
+.qh { font-size: 28rpx; font-weight: 700; color: var(--brand-deep); margin: 20rpx 0 4rpx; }
+.qsub { text-align: right; font-size: 26rpx; color: var(--text-2); margin: 6rpx 0 4rpx; }
+.dedupNote { font-size: 22rpx; color: #1f8a70; background: #eaf7f1; border-radius: var(--r-sm); padding: 12rpx 18rpx; margin: 10rpx 0 4rpx; line-height: 1.5; }
+.totalBtn { margin-top: 16rpx; background: var(--brand); color: #fff; }
+
+/* 三档对比卡 */
+.tiers { display: flex; gap: 14rpx; margin: 6rpx 0 10rpx; }
+.tierCard { flex: 1; border: 2rpx solid var(--line); border-radius: var(--r-md); padding: 18rpx 10rpx; text-align: center; background: var(--line-soft); }
+.tierCard.on { border-color: var(--brand); background: var(--brand-soft); }
+.tcName { font-size: 28rpx; font-weight: 700; color: var(--brand-deep); margin-bottom: 6rpx; }
+.tcMat, .tcLab { font-size: 22rpx; color: var(--text-3); line-height: 1.5; }
+.tcTot { font-size: 28rpx; font-weight: 700; color: var(--price); margin-top: 6rpx; }
+
+/* 效果图 tab */
+.renderBox { width: 100%; height: 440rpx; border-radius: var(--r-md); overflow: hidden; background: var(--line-soft); display: flex; align-items: center; justify-content: center; }
+.renderImg { width: 100%; height: 100%; }
+.renderEmpty { font-size: 26rpx; color: var(--text-3); }
+.rerr { color: var(--danger); }
+.refs { display: flex; gap: 14rpx; margin: 12rpx 0 6rpx; flex-wrap: wrap; }
+.refWrap { position: relative; width: 120rpx; height: 120rpx; border-radius: var(--r-sm); overflow: hidden; }
+.refImg { width: 100%; height: 100%; }
+.refDel { position: absolute; top: 0; right: 0; width: 40rpx; height: 40rpx; line-height: 36rpx; text-align: center; background: rgba(0,0,0,0.55); color: #fff; font-size: 28rpx; border-radius: 0 0 0 var(--r-sm); }
+.refAdd { width: 120rpx; height: 120rpx; border: 2rpx dashed var(--line); border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; font-size: 48rpx; color: var(--text-3); background: var(--line-soft); }
+.renderBtn { margin-top: 20rpx; background: var(--brand); color: #fff; font-weight: 700; }
+.btnRow .saveBtn { margin-top: 20rpx; background: var(--brand-soft); color: var(--brand-deep); }
+
+/* 效果图相册（多张） */
+.album { margin-top: 22rpx; }
+.albumScroll { white-space: nowrap; }
+.athumb { display: inline-block; width: 150rpx; height: 150rpx; border-radius: 12rpx; overflow: hidden; margin-right: 14rpx; border: 3rpx solid transparent; }
+.athumb.on { border-color: var(--brand); }
+.athumbImg { width: 150rpx; height: 150rpx; }
+.albumTip { display: block; font-size: 22rpx; color: var(--text-3); margin-top: 10rpx; }
+
+/* 拍照 + 风格选择 */
+.qh2 { font-size: 26rpx; font-weight: 600; color: var(--text-2); margin: 22rpx 0 10rpx; }
+.photoBox { width: 100%; height: 360rpx; border-radius: var(--r-md); overflow: hidden; background: var(--line-soft); display: flex; align-items: center; justify-content: center; border: 2rpx dashed var(--line); }
+.photoImg { width: 100%; height: 100%; }
+.photoEmpty { font-size: 28rpx; color: var(--text-3); }
+.styles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14rpx; margin-top: 4rpx; }
+.style { font-size: 22rpx; padding: 16rpx 4rpx; text-align: center; border-radius: 12rpx; border: 2rpx solid var(--line); color: var(--text-2); background: var(--line-soft); }
+.style.on { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-deep); font-weight: 700; }
+.payNote { font-size: 24rpx; color: var(--warn); background: var(--warn-bg); border: 1rpx solid var(--warn-line); border-radius: var(--r-sm); padding: 12rpx 18rpx; margin: 18rpx 0 4rpx; }
+.payNote .num { font-weight: 800; color: var(--brand-deep); }
+
+/* 无额度时展示的示例图 */
+.renderImg.demo { filter: saturate(.9); }
+.demoTag { font-size: 22rpx; color: var(--text-3); text-align: center; margin-top: 10rpx; }
+
+/* 未注册拦截遮罩 */
+.regMask { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 100; }
+.regCard { width: 560rpx; background: var(--card); border-radius: var(--r-lg); padding: 48rpx 40rpx; box-shadow: var(--shadow); text-align: center; }
+.regTitle { font-size: 32rpx; font-weight: 700; color: var(--brand-deep); margin-bottom: 16rpx; }
+.regTip { font-size: 26rpx; color: var(--text-3); line-height: 1.6; margin-bottom: 32rpx; }
+.regMask .btn { background: var(--brand); color: #fff; font-weight: 700; }
+
+/* 导出用画布：移出视口且不可交互，不参与布局 */
+.stampCv { position: fixed; left: -9999px; top: 0; opacity: 0; pointer-events: none; z-index: -1; }
+.saveTip { font-size: 24rpx; color: var(--danger); text-align: center; margin: 8rpx 0 4rpx; }
+
+/* 额度行 + 相册入口 */
+.buyLink { color: var(--brand); text-decoration: underline; margin-left: 8rpx; }
+.galLine { font-size: 25rpx; color: var(--brand); text-align: center; padding: 16rpx 0 4rpx; }
+
+/* 套餐面板 */
+.payMask { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; z-index: 200; }
+.paySheet { width: 100%; background: #fff; border-radius: 28rpx 28rpx 0 0; padding: 36rpx 32rpx 48rpx; }
+.psTitle { font-size: 34rpx; font-weight: 800; color: var(--text-1); text-align: center; }
+.psSub { font-size: 23rpx; color: var(--text-3); line-height: 1.6; text-align: center; margin: 14rpx 0 28rpx; }
+.packs { display: flex; }
+.pack { flex: 1; position: relative; border: 2rpx solid var(--line); border-radius: var(--r-md); padding: 30rpx 16rpx 26rpx; margin-right: 20rpx; text-align: center; }
+.pack:last-child { margin-right: 0; }
+.pack.hot { border-color: var(--brand); background: #ECFDF5; }
+.packTag { position: absolute; top: -2rpx; right: -2rpx; background: var(--brand); color: #fff; font-size: 19rpx; padding: 4rpx 12rpx; border-radius: 0 var(--r-md) 0 12rpx; }
+.packTitle { font-size: 30rpx; font-weight: 800; color: var(--text-1); }
+.packPer { font-size: 22rpx; color: var(--text-3); margin-top: 10rpx; }
+.psClose { text-align: center; font-size: 26rpx; color: var(--text-3); margin-top: 30rpx; padding: 10rpx; }
+

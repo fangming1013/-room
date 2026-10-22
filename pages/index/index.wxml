@@ -1,0 +1,132 @@
+<view class="wrap">
+  <!-- 空间选择 -->
+  <view class="card">
+    <view class="title">① 选择空间</view>
+    <scroll-view scroll-x class="chips">
+      <view wx:for="{{spaceKeys}}" wx:key="*this"
+            class="chip {{cur===item?'on':''}}"
+            data-key="{{item}}" bindtap="selectSpace">{{names[item]}}</view>
+    </scroll-view>
+  </view>
+
+  <!-- 录入方式 -->
+  <view class="card">
+    <view class="title">② 录入尺寸</view>
+    <view class="addrRow">
+      <text class="albl">工程地址</text>
+      <input class="ainp" placeholder="如：xx路xx号xx小区（语音或手动填）" value="{{address}}" bindinput="onAddress"/>
+    </view>
+    <view class="addrTip">语音录入时直接说「地址：xx路xx号」，会自动识别并记录</view>
+    <view class="chips mthd">
+      <view wx:for="{{methods}}" wx:key="id"
+            class="chip {{inputMethod===item.id?'on':''}}"
+            data-m="{{item.id}}" bindtap="selectMethod">{{item.name}}</view>
+    </view>
+
+    <!-- 语音录入 -->
+    <view wx:if="{{inputMethod==='voice'}}" class="msec">
+      <view class="mh">🎤 语音录入</view>
+      <view wx:if="{{showTemplate}}" class="tpl">
+        <view class="tplH">照下面的模板念（改数字即可）：</view>
+        <view class="tplT">
+          <text wx:for="{{tplSegs}}" wx:key="index" class="{{item.v?'tplV':''}}">{{item.t}}</text>
+        </view>
+        <view class="tplTip">第一遍只报：空间名 + 宽/深/高 + 门/窗在哪面墙。别说「门宽/窗宽」，门窗尺寸在松手后的确认弹层里报（第二遍）。</view>
+      </view>
+      <view class="row">
+        <view class="btn voice {{recording?'rec':''}}" bindtouchstart="onVoiceStart" bindtouchend="onVoiceEnd">🎤 按住说话报尺寸</view>
+      </view>
+      <view wx:if="{{voiceText}}" class="voiceText">识别：{{voiceText}}</view>
+    </view>
+
+    <!-- 手动录入 -->
+    <view wx:if="{{inputMethod==='manual'}}" class="msec">
+      <view class="mh">📏 手动录入</view>
+      <view class="dims">
+        <view class="dim"><text>宽</text><input type="digit" value="{{space.w}}" bindinput="onW" bindblur="onDimBlur"/><text class="u">cm</text></view>
+        <view class="dim"><text>深</text><input type="digit" value="{{space.d}}" bindinput="onD" bindblur="onDimBlur"/><text class="u">cm</text></view>
+        <view class="dim"><text>高</text><input type="digit" value="{{space.h}}" bindinput="onH" bindblur="onDimBlur"/><text class="u">cm</text></view>
+      </view>
+      <view class="row">
+        <text class="lbl">门在</text>
+        <picker range="{{wallNames}}" value="{{doorIdx}}" bindchange="onDoorWall" class="picker">{{wallNames[doorIdx]}}</picker>
+        <text class="lbl" style="margin-left:20rpx;">宽</text>
+        <input class="winput" type="digit" value="{{space.doorW}}" bindinput="onDoorW"/><text class="u">cm</text>
+        <text class="lbl" style="margin-left:18rpx;">距左端</text>
+        <input class="winput" type="digit" placeholder="居中" value="{{space.doorOff==null?'':space.doorOff}}" bindinput="onDoorOff"/><text class="u">cm</text>
+      </view>
+      <view class="row">
+        <text class="lbl">窗在</text>
+        <picker range="{{wallNames}}" value="{{winIdx}}" bindchange="onWinWall" class="picker">{{wallNames[winIdx]}}</picker>
+        <text class="lbl" style="margin-left:20rpx;">宽</text>
+        <input class="winput" type="digit" value="{{space.winW}}" bindinput="onWinW"/><text class="u">cm</text>
+        <text class="lbl" style="margin-left:18rpx;">距左端</text>
+        <input class="winput" type="digit" placeholder="居中" value="{{space.winOff==null?'':space.winOff}}" bindinput="onWinOff"/><text class="u">cm</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 家具 -->
+  <view class="card">
+    <view class="title">③ 摆放家具（语音或点选）</view>
+    <view class="chips">
+      <view wx:for="{{space.furniture}}" wx:key="id"
+            class="chip {{item.on?'on':''}}"
+            data-id="{{item.id}}" bindtap="toggleFurn">{{item.name}}</view>
+    </view>
+  </view>
+
+  <view style="height:24rpx;"></view>
+  <view class="nextHint">录入完成 → 点下方「生成预算」，自动进入报价页（含主材/施工明细与总预算）</view>
+
+  <view style="height:160rpx;"></view>
+
+  <!-- 底部 -->
+  <view class="bar">
+    <button class="btn gen" bindtap="generate">生成预算</button>
+  </view>
+
+  <!-- 门窗宽与定位 · 语音确认 -->
+  <view wx:if="{{openSheet.show}}" class="mask" bindtap="closeOpenSheet">
+    <view class="sheet" catchtap="noop">
+      <view class="title">第二遍：门窗尺寸确认</view>
+      <view class="opRow"><text class="opLbl">门宽</text>
+        <input class="winput" type="digit" value="{{space.doorW}}" bindinput="onDoorW"/><text class="u">cm</text>
+        <text class="opLbl" style="margin-left:18rpx;">距左端</text>
+        <input class="winput" type="digit" placeholder="居中" value="{{space.doorOff==null?'':space.doorOff}}" bindinput="onDoorOff"/><text class="u">cm</text>
+      </view>
+      <view class="opRow"><text class="opLbl">窗宽</text>
+        <input class="winput" type="digit" value="{{space.winW}}" bindinput="onWinW"/><text class="u">cm</text>
+        <text class="opLbl" style="margin-left:18rpx;">距左端</text>
+        <input class="winput" type="digit" placeholder="居中" value="{{space.winOff==null?'':space.winOff}}" bindinput="onWinOff"/><text class="u">cm</text>
+      </view>
+      <view class="opTip">「距左端」= 该洞距所在墙面左端的距离，用来定位；留空＝居中。<br/>比如：门宽90 门距左端20 窗宽150 居中</view>
+      <view class="row">
+        <view class="btn voice {{recording?'rec':''}}" bindtouchstart="onOpenVoiceStart" bindtouchend="onOpenVoiceEnd">🎤 按住报门窗宽与定位</view>
+      </view>
+      <view wx:if="{{openVText}}" class="voiceText">识别：{{openVText}}</view>
+      <view class="btn ghost" bindtap="confirmOpenings">确认</view>
+    </view>
+  </view>
+
+  <!-- 选品牌弹窗 -->
+  <view wx:if="{{brandSheet.show}}" class="mask" bindtap="closeBrand">
+    <view class="sheet" catchtap="noop">
+      <view class="title">选「{{space.materials[brandSheet.idx].name}}」的品牌</view>
+      <view class="boptH">档位默认价</view>
+      <view wx:for="{{brandSheet.options}}" wx:key="key" class="bopt" data-i="{{index}}" bindtap="pickBrand">
+        <image wx:if="{{item.image}}" src="{{item.image}}" class="boptImg" mode="aspectFill"/>
+        <view class="boptInfo">
+          <text class="bon">{{item.name}}{{item.ad?'（广告）':''}}</text>
+          <text wx:if="{{item.spec}}" class="bspec">{{item.spec}}</text>
+          <text class="bop">{{item.ad ? '¥'+item.price+(item.unit?('/'+item.unit):'')+' · 材料商' : (item.kind==='tier' ? '¥'+item.price : '')}}</text>
+        </view>
+        <view wx:if="{{item.qrCode}}" class="addwx" data-url="{{item.qrCode}}" catchtap="showQR">加微信</view>
+      </view>
+      <view class="bopt reset" bindtap="resetBrand">
+        <text class="bon">清除品牌（用档位价）</text>
+      </view>
+      <view class="btn ghost" bindtap="closeBrand">关闭</view>
+    </view>
+  </view>
+</view>

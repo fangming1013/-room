@@ -1,0 +1,80 @@
+.wrap { padding: 0 0 60rpx; }
+
+/* 分享按钮 */
+.shareBtn {
+  margin: 8rpx 24rpx 0; background: var(--brand); color: #fff;
+  font-size: 28rpx; font-weight: 700; border-radius: var(--r-md);
+  padding: 22rpx 0; line-height: 1.2;
+}
+
+/* 品牌头部：渐变 + 留白，强设计感 */
+.hero {
+  background: linear-gradient(135deg, #ECFDF5 0%, #F0FDFA 55%, #FFFFFF 100%);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  padding: 64rpx 40rpx 48rpx;
+  margin-bottom: 28rpx;
+}
+.logo {
+  font-size: 56rpx;
+  font-weight: 800;
+  color: var(--brand-deep);
+  letter-spacing: 3rpx;
+}
+.slogan { margin-top: 14rpx; font-size: 27rpx; color: var(--text-2); }
+
+/* 用户栏 */
+.userbar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--brand-soft);
+  border-radius: var(--r-md);
+  padding: 18rpx 24rpx;
+  margin: 0 24rpx 24rpx;
+}
+.userbar .hi { font-size: 26rpx; color: var(--text-1); }
+.ubtn {
+  font-size: 24rpx; color: var(--brand-deep); background: #fff;
+  border: 2rpx solid var(--brand); border-radius: 999rpx; padding: 8rpx 24rpx;
+}
+.ubtn.reg { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+/* 资料未填完的引导条 */
+.profTip { margin: -8rpx 24rpx 24rpx; font-size: 24rpx; color: #B45309; background: #FFFBEB; border: 1rpx solid #FDE68A; border-radius: var(--r-md); padding: 14rpx 20rpx; }
+
+/* 入口卡片 */
+.entry {
+  display: flex; align-items: center;
+  background: var(--card);
+  border-radius: var(--r-lg);
+  padding: 34rpx 30rpx;
+  margin: 0 24rpx 22rpx;
+  box-shadow: var(--shadow);
+}
+.entry .eicon { font-size: 56rpx; margin-right: 24rpx; }
+.entry .etxt { flex: 1; }
+.entry .etitle { font-size: 34rpx; font-weight: 700; color: var(--text-1); }
+.entry .edesc { margin-top: 8rpx; font-size: 24rpx; color: var(--text-3); line-height: 1.5; }
+.entry .earrow { font-size: 40rpx; color: var(--text-3); }
+.entry.voice { border-left: 10rpx solid var(--brand); }
+.entry.adm { border-left: 10rpx solid var(--violet); }
+
+/* 项目进度卡 */
+.proj {
+  background: var(--card);
+  border-radius: var(--r-lg);
+  padding: 30rpx;
+  margin: 0 24rpx 22rpx;
+  box-shadow: var(--shadow);
+}
+.ptitle { font-size: 28rpx; color: var(--text-2); }
+.ptotal { margin-top: 12rpx; font-size: 28rpx; color: var(--text-2); }
+.ptotal .pn { color: var(--price); font-weight: 800; font-size: 40rpx; }
+.pbtn {
+  margin-top: 24rpx; background: var(--brand); color: #fff;
+  font-size: 30rpx; border-radius: var(--r-md); padding: 20rpx 0; text-align: center;
+}
+.preset { margin-top: 16rpx; text-align: center; font-size: 24rpx; color: var(--text-3); }
+
+.foot {
+  margin: 30rpx 24rpx 0; font-size: 22rpx; color: var(--text-3);
+  line-height: 1.6; text-align: center;
+}

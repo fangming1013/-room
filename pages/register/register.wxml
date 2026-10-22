@@ -1,0 +1,67 @@
+<view class="wrap">
+  <view class="head">还差一步，生成您的专属预算</view>
+  <view class="sub">选好这几项，立刻看到完整分项报价，并可申请本地师傅免费上门测量</view>
+
+  <!-- 城市：选择，不打字 -->
+  <view class="card">
+    <view class="ctitle">您家所在城市</view>
+    <view class="chips">
+      <view wx:for="{{cities}}" wx:key="*this"
+            class="chip {{(item==='其他' && cityOther) || (item!=='其他' && city===item) ? 'on' : ''}}"
+            data-c="{{item}}" bindtap="pickCity">{{item}}</view>
+    </view>
+    <input wx:if="{{cityOther}}" class="inp other" placeholder="请输入城市名" value="{{city}}" bindinput="onCity"/>
+  </view>
+
+  <!-- 整装 / 局改：二选一 -->
+  <view class="card">
+    <view class="ctitle">装修方式<text class="req">必选</text></view>
+    <view class="types">
+      <view class="type {{decoType==='partial' ? 'on' : ''}}" data-t="partial" bindtap="pickType">
+        <view class="tname">局改</view>
+        <view class="tdesc">厨房 / 卫生间 / 单个房间翻新</view>
+      </view>
+      <view class="type {{decoType==='whole' ? 'on' : ''}}" data-t="whole" bindtap="pickType">
+        <view class="tname">整装</view>
+        <view class="tdesc">全屋整体装修</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 面积：自动带出，可改 -->
+  <view class="card">
+    <view class="row">
+      <text class="lbl">面积</text>
+      <input wx:if="{{areaEdit}}" class="inp" type="digit" placeholder="请输入面积" value="{{areaText}}" bindinput="onArea"/>
+      <text wx:else class="val">{{areaText ? areaText + ' ㎡' : '未录入'}}</text>
+      <text wx:if="{{!areaEdit}}" class="edit" bindtap="editArea">修改</text>
+    </view>
+    <view wx:if="{{areaAuto && !areaEdit}}" class="hint">已按您刚才录入的尺寸自动计算</view>
+  </view>
+
+  <!-- 手机号 -->
+  <view class="card">
+    <view class="row">
+      <text class="lbl">手机号</text>
+      <input wx:if="{{manual}}" class="inp" type="number" placeholder="请输入手机号" value="{{phone}}" bindinput="onPhone"/>
+      <text wx:else class="val light">{{phone || '微信一键授权，无需输入'}}</text>
+    </view>
+    <view class="row">
+      <text class="lbl">称呼</text>
+      <input class="inp" placeholder="如：王先生（可不填）" value="{{name}}" bindinput="onName"/>
+    </view>
+  </view>
+
+  <block wx:if="{{!manual}}">
+    <button class="btn ok {{decoType ? '' : 'dis'}}" open-type="getPhoneNumber" disabled="{{!decoType}}"
+            bindgetphonenumber="onGetPhone" loading="{{loading}}">{{decoType ? '微信一键获取手机号，查看预算' : '请先选择整装或局改'}}</button>
+    <view class="manual" bindtap="useManual">授权不了？手动填写手机号</view>
+  </block>
+  <block wx:else>
+    <button class="btn ok" bindtap="submit" loading="{{loading}}">查看我的预算</button>
+  </block>
+
+  <view wx:if="{{err}}" class="err">{{err}}</view>
+  <view class="agree">提交即代表同意 <text class="link" bindtap="openAgreement">《用户协议》</text> 与 <text class="link" bindtap="openPrivacy">《隐私政策》</text></view>
+  <view class="tip">手机号仅用于回访报价与安排上门测量，不作其他用途</view>
+</view>

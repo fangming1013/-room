@@ -1,0 +1,39 @@
+{
+  "__usePrivacyCheck__": true,
+  "pages": [
+    "pages/home/home",
+    "pages/index/index",
+    "pages/budget/budget",
+    "pages/result/result",
+    "pages/gallery/gallery",
+    "pages/supplier/supplier",
+    "pages/summary/summary",
+    "pages/register/register",
+    "pages/agreement/agreement",
+    "pages/history/history",
+    "pages/admin/admin",
+    "pages/qtyrules/qtyrules"
+  ],
+  "window": {
+    "navigationBarTitleText": "算一算",
+    "navigationBarBackgroundColor": "#10B981",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f7f6"
+  },
+    "style": "v2",
+    "sitemapLocation": "sitemap.json",
+    "permission": {
+      "scope.record": {
+        "desc": "用于语音报尺寸，自动识别房间长宽高与家具清单"
+      },
+      "scope.writePhotosAlbum": {
+        "desc": "用于保存施工图与效果图到手机相册"
+      }
+    },
+    "plugins": {
+      "WechatSI": {
+        "version": "0.3.10",
+        "provider": "wx069ba97219f66d99"
+      }
+    }
+  }

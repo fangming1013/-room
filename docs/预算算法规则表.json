@@ -1,0 +1,1832 @@
+[
+  {
+    "space_key": "kitchen",
+    "space_name": "厨房",
+    "items": [
+      {
+        "id": "翻筑工艺套餐",
+        "category": "materials",
+        "name": "翻筑工艺套餐",
+        "unit": "套",
+        "price": 17800,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "地柜长度",
+        "category": "materials",
+        "name": "地柜长度",
+        "unit": "M",
+        "price": 1800,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "厨房=长+宽−1.3；其它空间=max(宽,深)"
+      },
+      {
+        "id": "吊柜长度",
+        "category": "materials",
+        "name": "吊柜长度",
+        "unit": "M",
+        "price": 880,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "=地柜长度×0.6"
+      },
+      {
+        "id": "见光板",
+        "category": "materials",
+        "name": "见光板",
+        "unit": "块",
+        "price": 300,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "包烟管",
+        "category": "materials",
+        "name": "包烟管",
+        "unit": "个",
+        "price": 300,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "拉篮",
+        "category": "materials",
+        "name": "拉篮",
+        "unit": "个",
+        "price": 780,
+        "prices": {
+          "mid": 980,
+          "top": 1580
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "抽屉",
+        "category": "materials",
+        "name": "抽屉",
+        "unit": "个",
+        "price": 200,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "烟机灶具套餐",
+        "category": "materials",
+        "name": "烟机灶具套餐",
+        "unit": "套",
+        "price": 2600,
+        "prices": {
+          "mid": 3500,
+          "top": 3500
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "热水器",
+        "category": "materials",
+        "name": "热水器",
+        "unit": "个",
+        "price": 2600,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "水槽抽拉龙头",
+        "category": "materials",
+        "name": "水槽抽拉龙头",
+        "unit": "套",
+        "price": 1280,
+        "prices": {
+          "mid": 1580,
+          "top": 1580
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "吊顶",
+        "category": "materials",
+        "name": "吊顶",
+        "unit": "项",
+        "price": 1280,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "超出面积",
+        "category": "materials",
+        "name": "超出面积",
+        "unit": "M²",
+        "price": 1000,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "开关插座面板",
+        "category": "materials",
+        "name": "开关插座面板",
+        "unit": "个",
+        "price": 38,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "点位数(厨12/卫6/客15/卧12/书12/阳台5)"
+      },
+      {
+        "id": "平开门钛镁合金",
+        "category": "materials",
+        "name": "平开门（钛镁合金）",
+        "unit": "樘",
+        "price": 1580,
+        "prices": {
+          "mid": 1780,
+          "top": 1780
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "推拉门",
+        "category": "materials",
+        "name": "推拉门",
+        "unit": "M²",
+        "price": 1280,
+        "prices": {
+          "mid": 1600,
+          "top": 1600
+        },
+        "on": true,
+        "group": null,
+        "formula": "门洞宽×门洞高（厨房/阳台=推拉双门1.6×2.05）"
+      },
+      {
+        "id": "套装门",
+        "category": "materials",
+        "name": "套装门",
+        "unit": "樘",
+        "price": 1280,
+        "prices": {
+          "mid": 1580,
+          "top": 1800
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "钛镁合金门套",
+        "category": "materials",
+        "name": "钛镁合金门套",
+        "unit": "M",
+        "price": 280,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "固定5.0m/樘"
+      },
+      {
+        "id": "厨房双边木门套",
+        "category": "materials",
+        "name": "厨房双边木门套",
+        "unit": "M",
+        "price": 260,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "固定5.0m/樘"
+      },
+      {
+        "id": "墙地砖整体拆除",
+        "category": "labor",
+        "name": "墙地砖整体拆除",
+        "unit": "项",
+        "price": 1800,
+        "prices": null,
+        "on": true,
+        "group": "demo",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "拆除后修补",
+        "category": "labor",
+        "name": "拆除后修补",
+        "unit": "项",
+        "price": 1200,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "局部拆除",
+        "category": "labor",
+        "name": "局部拆除",
+        "unit": "项",
+        "price": 800,
+        "prices": null,
+        "on": true,
+        "group": "demo",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "门套基层处理",
+        "category": "labor",
+        "name": "门套基层处理",
+        "unit": "项",
+        "price": 680,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "全空间做水电",
+        "category": "labor",
+        "name": "全空间做水电",
+        "unit": "项",
+        "price": 2800,
+        "prices": null,
+        "on": true,
+        "group": "water",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "水电位改造",
+        "category": "labor",
+        "name": "水电位改造",
+        "unit": "项",
+        "price": 1500,
+        "prices": null,
+        "on": true,
+        "group": "water",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "贴砖",
+        "category": "labor",
+        "name": "贴砖",
+        "unit": "M²",
+        "price": 300,
+        "prices": null,
+        "on": true,
+        "group": "floor_cover",
+        "formula": "贴砖面积=地面积×(1+5%损耗)+墙面积(周长×2.4−门洞−窗洞)"
+      },
+      {
+        "id": "台中盆加工",
+        "category": "labor",
+        "name": "台中盆加工",
+        "unit": "个",
+        "price": 280,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "美缝",
+        "category": "labor",
+        "name": "瓷砖美缝",
+        "unit": "m²",
+        "price": 30,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "同贴砖面积；仅地面选「贴砖」时算，选地板→0"
+      }
+    ]
+  },
+  {
+    "space_key": "bathroom",
+    "space_name": "卫生间",
+    "items": [
+      {
+        "id": "翻筑工艺套餐",
+        "category": "materials",
+        "name": "翻筑工艺套餐",
+        "unit": "套",
+        "price": 16800,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "主材包",
+        "category": "materials",
+        "name": "主材包",
+        "unit": "套",
+        "price": 5500,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "暖风机冷风机",
+        "category": "materials",
+        "name": "暖风机/冷风机",
+        "unit": "个",
+        "price": 580,
+        "prices": {
+          "mid": 780,
+          "top": 1280
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "成品卫浴柜60-90cm",
+        "category": "materials",
+        "name": "成品卫浴柜（60-90cm）简约款",
+        "unit": "套",
+        "price": 1980,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "淋浴区大理石台板",
+        "category": "materials",
+        "name": "淋浴区大理石台板",
+        "unit": "块",
+        "price": 1800,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "成品淋浴房",
+        "category": "materials",
+        "name": "成品淋浴房",
+        "unit": "套",
+        "price": 1680,
+        "prices": {
+          "mid": 2080,
+          "top": 2080
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "马桶",
+        "category": "materials",
+        "name": "马桶",
+        "unit": "个",
+        "price": 1280,
+        "prices": {
+          "mid": 2280,
+          "top": 3980
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "花洒",
+        "category": "materials",
+        "name": "花洒",
+        "unit": "套",
+        "price": 980,
+        "prices": {
+          "mid": 1280,
+          "top": 1280
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "淋浴房定制",
+        "category": "materials",
+        "name": "淋浴房（定制）",
+        "unit": "M²",
+        "price": 580,
+        "prices": {
+          "mid": 780,
+          "top": 780
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "龙头",
+        "category": "materials",
+        "name": "龙头",
+        "unit": "个",
+        "price": 280,
+        "prices": {
+          "mid": 380,
+          "top": 380
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "铝扣板吊顶",
+        "category": "materials",
+        "name": "铝扣板吊顶",
+        "unit": "项",
+        "price": 1280,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "超出面积",
+        "category": "materials",
+        "name": "超出面积",
+        "unit": "M²",
+        "price": 1000,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "开关插座面板",
+        "category": "materials",
+        "name": "开关插座面板",
+        "unit": "个",
+        "price": 38,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "点位数(厨12/卫6/客15/卧12/书12/阳台5)"
+      },
+      {
+        "id": "平开门钛镁合金",
+        "category": "materials",
+        "name": "平开门（钛镁合金）",
+        "unit": "樘",
+        "price": 1580,
+        "prices": {
+          "mid": 1780,
+          "top": 1780
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "套装门",
+        "category": "materials",
+        "name": "套装门",
+        "unit": "樘",
+        "price": 1280,
+        "prices": {
+          "mid": 1580,
+          "top": 1800
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "钛镁合金门套",
+        "category": "materials",
+        "name": "钛镁合金门套",
+        "unit": "M",
+        "price": 280,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "固定5.0m/樘"
+      },
+      {
+        "id": "墙地砖整体拆除",
+        "category": "labor",
+        "name": "墙地砖整体拆除",
+        "unit": "项",
+        "price": 1800,
+        "prices": null,
+        "on": true,
+        "group": "demo",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "拆除后修补",
+        "category": "labor",
+        "name": "拆除后修补",
+        "unit": "项",
+        "price": 1200,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "局部拆除",
+        "category": "labor",
+        "name": "局部拆除",
+        "unit": "项",
+        "price": 800,
+        "prices": null,
+        "on": true,
+        "group": "demo",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "伟星咖乐防水湿区到顶",
+        "category": "labor",
+        "name": "伟星咖乐防水湿区到顶",
+        "unit": "间",
+        "price": 1380,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "伟星咖乐防水湿区1.8m",
+        "category": "labor",
+        "name": "伟星咖乐防水湿区1.8m",
+        "unit": "间",
+        "price": 1280,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "隔音棉包水管",
+        "category": "labor",
+        "name": "隔音棉包水管",
+        "unit": "根",
+        "price": 800,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "防水处理",
+        "category": "labor",
+        "name": "防水处理",
+        "unit": "项",
+        "price": 800,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "门套基层处理",
+        "category": "labor",
+        "name": "门套基层处理",
+        "unit": "项",
+        "price": 680,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "防水处理2",
+        "category": "labor",
+        "name": "防水处理",
+        "unit": "M²",
+        "price": 68,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "地面积+上翻0.3×周长+(1.8−0.3)×max(宽,深)"
+      },
+      {
+        "id": "全空间做水电",
+        "category": "labor",
+        "name": "全空间做水电",
+        "unit": "项",
+        "price": 2800,
+        "prices": null,
+        "on": true,
+        "group": "water",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "水电位改造局部改造",
+        "category": "labor",
+        "name": "水电位改造（局部改造）",
+        "unit": "项",
+        "price": 1500,
+        "prices": null,
+        "on": true,
+        "group": "water",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "贴砖",
+        "category": "labor",
+        "name": "贴砖",
+        "unit": "M²",
+        "price": 300,
+        "prices": null,
+        "on": true,
+        "group": "floor_cover",
+        "formula": "贴砖面积=地面积×(1+5%损耗)+墙面积(周长×2.4−门洞−窗洞)"
+      },
+      {
+        "id": "美缝",
+        "category": "labor",
+        "name": "瓷砖美缝",
+        "unit": "m²",
+        "price": 30,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "同贴砖面积；仅地面选「贴砖」时算，选地板→0"
+      }
+    ]
+  },
+  {
+    "space_key": "living",
+    "space_name": "客厅",
+    "items": [
+      {
+        "id": "复合实木地板",
+        "category": "materials",
+        "name": "复合实木地板",
+        "unit": "M²",
+        "price": 238,
+        "prices": null,
+        "on": false,
+        "group": "floor_cover",
+        "formula": "地面积×(1+5%损耗)"
+      },
+      {
+        "id": "实木踢脚线",
+        "category": "materials",
+        "name": "实木踢脚线",
+        "unit": "米",
+        "price": 38,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "周长−门洞宽0.9"
+      },
+      {
+        "id": "开关插座面板",
+        "category": "materials",
+        "name": "开关插座面板",
+        "unit": "个",
+        "price": 38,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "点位数(厨12/卫6/客15/卧12/书12/阳台5)"
+      },
+      {
+        "id": "入户门",
+        "category": "materials",
+        "name": "入户门",
+        "unit": "樘",
+        "price": 1680,
+        "prices": {
+          "mid": 2500,
+          "top": 3500
+        },
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "入户门门套",
+        "category": "materials",
+        "name": "入户门门套",
+        "unit": "米",
+        "price": 158,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "墙地砖整体拆除",
+        "category": "labor",
+        "name": "墙地砖整体拆除",
+        "unit": "项",
+        "price": 1800,
+        "prices": null,
+        "on": true,
+        "group": "demo",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "局部拆除",
+        "category": "labor",
+        "name": "局部拆除",
+        "unit": "项",
+        "price": 800,
+        "prices": null,
+        "on": true,
+        "group": "demo",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "防水石膏板吊顶",
+        "category": "labor",
+        "name": "防水石膏板吊顶",
+        "unit": "M²",
+        "price": 200,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "石膏板吊顶平顶",
+        "category": "labor",
+        "name": "石膏板吊顶（平顶）",
+        "unit": "M²",
+        "price": 150,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "=地面积"
+      },
+      {
+        "id": "芸菁砂艺术墙面",
+        "category": "labor",
+        "name": "芸菁砂艺术墙面",
+        "unit": "M²",
+        "price": 98,
+        "prices": null,
+        "on": false,
+        "group": "coating",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "地面自流平",
+        "category": "labor",
+        "name": "地面自流平",
+        "unit": "M²",
+        "price": 90,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "仅地面选「复合实木地板」时=地面积；选地砖/石塑→0"
+      },
+      {
+        "id": "顶面涂料",
+        "category": "labor",
+        "name": "顶面涂料",
+        "unit": "M²",
+        "price": 58,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "=地面积"
+      },
+      {
+        "id": "墙面粉刷红砖墙处理",
+        "category": "labor",
+        "name": "墙面粉刷（红砖墙处理）",
+        "unit": "M²",
+        "price": 48,
+        "prices": null,
+        "on": false,
+        "group": "wall_base",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "墙面铲除",
+        "category": "labor",
+        "name": "墙面铲除",
+        "unit": "M²",
+        "price": 30,
+        "prices": null,
+        "on": true,
+        "group": "wall_rm",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "腻子粉批刮",
+        "category": "labor",
+        "name": "腻子粉批刮",
+        "unit": "M²",
+        "price": 30,
+        "prices": null,
+        "on": false,
+        "group": "wall_base",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "墙面局部修复基层处理",
+        "category": "labor",
+        "name": "墙面局部修复基层处理",
+        "unit": "M²",
+        "price": 20,
+        "prices": null,
+        "on": true,
+        "group": "wall_base",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "墙纸拆除",
+        "category": "labor",
+        "name": "墙纸拆除",
+        "unit": "M²",
+        "price": 10,
+        "prices": null,
+        "on": false,
+        "group": "wall_rm",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "乳胶漆铲除",
+        "category": "labor",
+        "name": "乳胶漆铲除",
+        "unit": "M²",
+        "price": 10,
+        "prices": null,
+        "on": false,
+        "group": "wall_rm",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "全空间做水电",
+        "category": "labor",
+        "name": "全空间做水电",
+        "unit": "项",
+        "price": 2800,
+        "prices": null,
+        "on": true,
+        "group": "water",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "水电位改造",
+        "category": "labor",
+        "name": "水电位改造",
+        "unit": "项",
+        "price": 1500,
+        "prices": null,
+        "on": true,
+        "group": "water",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "入户门改色",
+        "category": "labor",
+        "name": "入户门改色",
+        "unit": "个",
+        "price": 899,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "贴砖",
+        "category": "labor",
+        "name": "贴砖",
+        "unit": "M²",
+        "price": 300,
+        "prices": null,
+        "on": true,
+        "group": "floor_cover",
+        "formula": "贴砖面积=地面积×(1+5%损耗)+墙面积(周长×2.4−门洞−窗洞)"
+      },
+      {
+        "id": "家具改色",
+        "category": "labor",
+        "name": "家具改色",
+        "unit": "M²",
+        "price": 180,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "美缝",
+        "category": "labor",
+        "name": "瓷砖美缝",
+        "unit": "M²",
+        "price": 30,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "同贴砖面积；仅地面选「贴砖」时算，选地板→0"
+      }
+    ]
+  },
+  {
+    "space_key": "bedroom",
+    "space_name": "卧室",
+    "items": [
+      {
+        "id": "定制衣柜",
+        "category": "materials",
+        "name": "定制衣柜",
+        "unit": "M²",
+        "price": 1080,
+        "prices": {
+          "mid": 1280,
+          "top": 1280
+        },
+        "on": true,
+        "group": null,
+        "formula": "柜长(实测或默认2.0)×柜高2.6（投影面积）"
+      },
+      {
+        "id": "复合实木地板",
+        "category": "materials",
+        "name": "复合实木地板",
+        "unit": "M²",
+        "price": 238,
+        "prices": null,
+        "on": true,
+        "group": "floor_cover",
+        "formula": "地面积×(1+5%损耗)"
+      },
+      {
+        "id": "石塑地板6mm",
+        "category": "materials",
+        "name": "石塑地板（6mm）",
+        "unit": "M²",
+        "price": 118,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "地面积×(1+5%损耗)"
+      },
+      {
+        "id": "实木踢脚线",
+        "category": "materials",
+        "name": "实木踢脚线",
+        "unit": "米",
+        "price": 38,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "周长−门洞宽0.9"
+      },
+      {
+        "id": "开关插座面板",
+        "category": "materials",
+        "name": "开关插座面板",
+        "unit": "个",
+        "price": 38,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "点位数(厨12/卫6/客15/卧12/书12/阳台5)"
+      },
+      {
+        "id": "套装门",
+        "category": "materials",
+        "name": "套装门",
+        "unit": "樘",
+        "price": 1580,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "双边木门套",
+        "category": "materials",
+        "name": "双边木门套",
+        "unit": "米",
+        "price": 260,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "固定5.0m/樘"
+      },
+      {
+        "id": "局部拆除",
+        "category": "labor",
+        "name": "局部拆除",
+        "unit": "项",
+        "price": 800,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "防水石膏板吊顶",
+        "category": "labor",
+        "name": "防水石膏板吊顶",
+        "unit": "M²",
+        "price": 200,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "石膏板吊顶平顶",
+        "category": "labor",
+        "name": "石膏板吊顶（平顶）",
+        "unit": "M²",
+        "price": 150,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "=地面积"
+      },
+      {
+        "id": "芸菁砂艺术墙面",
+        "category": "labor",
+        "name": "芸菁砂艺术墙面",
+        "unit": "M²",
+        "price": 98,
+        "prices": null,
+        "on": false,
+        "group": "coating",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "地面自流平",
+        "category": "labor",
+        "name": "地面自流平",
+        "unit": "M²",
+        "price": 90,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "仅地面选「复合实木地板」时=地面积；选地砖/石塑→0"
+      },
+      {
+        "id": "顶面涂料",
+        "category": "labor",
+        "name": "顶面涂料",
+        "unit": "M²",
+        "price": 58,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "=地面积"
+      },
+      {
+        "id": "墙面粉刷红砖墙处理",
+        "category": "labor",
+        "name": "墙面粉刷（红砖墙处理）",
+        "unit": "M²",
+        "price": 48,
+        "prices": null,
+        "on": false,
+        "group": "wall_base",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "墙面铲除",
+        "category": "labor",
+        "name": "墙面铲除",
+        "unit": "M²",
+        "price": 30,
+        "prices": null,
+        "on": true,
+        "group": "wall_rm",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "腻子粉批刮",
+        "category": "labor",
+        "name": "腻子粉批刮",
+        "unit": "M²",
+        "price": 30,
+        "prices": null,
+        "on": false,
+        "group": "wall_base",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "墙面局部修复基层处理",
+        "category": "labor",
+        "name": "墙面局部修复基层处理",
+        "unit": "M²",
+        "price": 20,
+        "prices": null,
+        "on": true,
+        "group": "wall_base",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "墙纸拆除",
+        "category": "labor",
+        "name": "墙纸拆除",
+        "unit": "M²",
+        "price": 10,
+        "prices": null,
+        "on": false,
+        "group": "wall_rm",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "乳胶漆铲除",
+        "category": "labor",
+        "name": "乳胶漆铲除",
+        "unit": "M²",
+        "price": 10,
+        "prices": null,
+        "on": false,
+        "group": "wall_rm",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "全空间做水电",
+        "category": "labor",
+        "name": "全空间做水电",
+        "unit": "项",
+        "price": 2800,
+        "prices": null,
+        "on": true,
+        "group": "water",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "水电位改造",
+        "category": "labor",
+        "name": "水电位改造",
+        "unit": "项",
+        "price": 1500,
+        "prices": null,
+        "on": true,
+        "group": "water",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "入户门改色",
+        "category": "labor",
+        "name": "入户门改色",
+        "unit": "个",
+        "price": 899,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "贴砖",
+        "category": "labor",
+        "name": "贴砖",
+        "unit": "M²",
+        "price": 300,
+        "prices": null,
+        "on": false,
+        "group": "floor_cover",
+        "formula": "贴砖面积=地面积×(1+5%损耗)+墙面积(周长×2.4−门洞−窗洞)"
+      },
+      {
+        "id": "家具改色",
+        "category": "labor",
+        "name": "家具改色",
+        "unit": "M²",
+        "price": 180,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "美缝",
+        "category": "labor",
+        "name": "瓷砖美缝",
+        "unit": "M²",
+        "price": 30,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "同贴砖面积；仅地面选「贴砖」时算，选地板→0"
+      }
+    ]
+  },
+  {
+    "space_key": "balcony",
+    "space_name": "阳台",
+    "items": [
+      {
+        "id": "复合实木地板",
+        "category": "materials",
+        "name": "复合实木地板",
+        "unit": "M²",
+        "price": 238,
+        "prices": null,
+        "on": false,
+        "group": "floor_cover",
+        "formula": "地面积×(1+5%损耗)"
+      },
+      {
+        "id": "石塑地板6mm",
+        "category": "materials",
+        "name": "石塑地板（6mm）",
+        "unit": "M²",
+        "price": 118,
+        "prices": null,
+        "on": false,
+        "group": "floor_cover",
+        "formula": "地面积×(1+5%损耗)"
+      },
+      {
+        "id": "实木踢脚线",
+        "category": "materials",
+        "name": "实木踢脚线",
+        "unit": "米",
+        "price": 38,
+        "prices": null,
+        "on": false,
+        "group": "floor_cover",
+        "formula": "周长−门洞宽0.9"
+      },
+      {
+        "id": "light2",
+        "category": "materials",
+        "name": "卧室主灯",
+        "unit": "台",
+        "price": 500,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "light",
+        "category": "materials",
+        "name": "阳台灯",
+        "unit": "台",
+        "price": 200,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "过门石",
+        "category": "materials",
+        "name": "过门石",
+        "unit": "块",
+        "price": 80,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "过门石数(仅卫生间1块)"
+      },
+      {
+        "id": "地漏",
+        "category": "materials",
+        "name": "地漏",
+        "unit": "个",
+        "price": 60,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "地漏数(卫1/阳台1)"
+      },
+      {
+        "id": "开关插座面板",
+        "category": "materials",
+        "name": "开关插座面板",
+        "unit": "个",
+        "price": 38,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "点位数(厨12/卫6/客15/卧12/书12/阳台5)"
+      },
+      {
+        "id": "双边木门套",
+        "category": "materials",
+        "name": "双边木门套",
+        "unit": "米",
+        "price": 260,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "固定5.0m/樘"
+      },
+      {
+        "id": "单边木门套",
+        "category": "materials",
+        "name": "单边木门套",
+        "unit": "米",
+        "price": 158,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "固定5.0m/樘"
+      },
+      {
+        "id": "墙地砖整体拆除",
+        "category": "labor",
+        "name": "墙地砖整体拆除",
+        "unit": "项",
+        "price": 1800,
+        "prices": null,
+        "on": true,
+        "group": "demo",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "局部拆除",
+        "category": "labor",
+        "name": "局部拆除",
+        "unit": "项",
+        "price": 800,
+        "prices": null,
+        "on": true,
+        "group": "demo",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "防水石膏板吊顶",
+        "category": "labor",
+        "name": "防水石膏板吊顶",
+        "price": 200,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "石膏板吊顶平顶",
+        "category": "labor",
+        "name": "石膏板吊顶（平顶）",
+        "price": 150,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "=地面积"
+      },
+      {
+        "id": "地面自流平",
+        "category": "labor",
+        "name": "地面自流平",
+        "price": 90,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "仅地面选「复合实木地板」时=地面积；选地砖/石塑→0"
+      },
+      {
+        "id": "芸菁砂艺术墙面",
+        "category": "labor",
+        "name": "芸菁砂艺术墙面",
+        "unit": "M²",
+        "price": 98,
+        "prices": null,
+        "on": false,
+        "group": "coating",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "顶面涂料",
+        "category": "labor",
+        "name": "顶面涂料",
+        "unit": "M²",
+        "price": 58,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "=地面积"
+      },
+      {
+        "id": "墙面粉刷红砖墙处理",
+        "category": "labor",
+        "name": "墙面粉刷（红砖墙处理）",
+        "price": 48,
+        "prices": null,
+        "on": false,
+        "group": "wall_base",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "腻子粉批刮",
+        "category": "labor",
+        "name": "腻子粉批刮",
+        "price": 30,
+        "prices": null,
+        "on": false,
+        "group": "wall_base",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "墙面铲除",
+        "category": "labor",
+        "name": "墙面铲除",
+        "unit": "M²",
+        "price": 30,
+        "prices": null,
+        "on": true,
+        "group": "wall_rm",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "墙面局部修复基层处理",
+        "category": "labor",
+        "name": "墙面局部修复基层处理",
+        "unit": "M²",
+        "price": 20,
+        "prices": null,
+        "on": true,
+        "group": "wall_base",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "墙纸拆除",
+        "category": "labor",
+        "name": "墙纸拆除",
+        "unit": "M²",
+        "price": 10,
+        "prices": null,
+        "on": false,
+        "group": "wall_rm",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "乳胶漆铲除",
+        "category": "labor",
+        "name": "乳胶漆铲除",
+        "price": 10,
+        "prices": null,
+        "on": false,
+        "group": "wall_rm",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "水电位改造",
+        "category": "labor",
+        "name": "水电位改造",
+        "unit": "项",
+        "price": 1500,
+        "prices": null,
+        "on": true,
+        "group": "water",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "贴砖",
+        "category": "labor",
+        "name": "贴砖",
+        "unit": "㎡",
+        "price": 300,
+        "prices": null,
+        "on": true,
+        "group": "floor_cover",
+        "formula": "贴砖面积=地面积×(1+5%损耗)+墙面积(周长×2.4−门洞−窗洞)"
+      },
+      {
+        "id": "y_light",
+        "category": "labor",
+        "name": "灯具安装",
+        "unit": "项",
+        "price": 100,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "防水",
+        "category": "labor",
+        "name": "防水",
+        "unit": "㎡",
+        "price": 60,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "美缝",
+        "category": "labor",
+        "name": "瓷砖美缝",
+        "unit": "M²",
+        "price": 30,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "同贴砖面积；仅地面选「贴砖」时算，选地板→0"
+      },
+      {
+        "id": "局部粉砌",
+        "category": "labor",
+        "name": "局部粉砌",
+        "unit": "㎡",
+        "price": 20,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      }
+    ]
+  },
+  {
+    "space_key": "study",
+    "space_name": "书房",
+    "items": [
+      {
+        "id": "定制衣柜",
+        "category": "materials",
+        "name": "定制衣柜",
+        "unit": "M²",
+        "price": 1080,
+        "prices": {
+          "mid": 1280,
+          "top": 1280
+        },
+        "on": true,
+        "group": null,
+        "formula": "柜长(实测或默认2.0)×柜高2.6（投影面积）"
+      },
+      {
+        "id": "复合实木地板",
+        "category": "materials",
+        "name": "复合实木地板",
+        "unit": "M²",
+        "price": 238,
+        "prices": null,
+        "on": true,
+        "group": "floor_cover",
+        "formula": "地面积×(1+5%损耗)"
+      },
+      {
+        "id": "石塑地板6mm",
+        "category": "materials",
+        "name": "石塑地板（6mm）",
+        "unit": "M²",
+        "price": 118,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "地面积×(1+5%损耗)"
+      },
+      {
+        "id": "实木踢脚线",
+        "category": "materials",
+        "name": "实木踢脚线",
+        "unit": "米",
+        "price": 38,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "周长−门洞宽0.9"
+      },
+      {
+        "id": "开关插座面板",
+        "category": "materials",
+        "name": "开关插座面板",
+        "unit": "个",
+        "price": 38,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "点位数(厨12/卫6/客15/卧12/书12/阳台5)"
+      },
+      {
+        "id": "套装门",
+        "category": "materials",
+        "name": "套装门",
+        "unit": "樘",
+        "price": 1580,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "双边木门套",
+        "category": "materials",
+        "name": "双边木门套",
+        "unit": "米",
+        "price": 260,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "固定5.0m/樘"
+      },
+      {
+        "id": "局部拆除",
+        "category": "labor",
+        "name": "局部拆除",
+        "unit": "项",
+        "price": 800,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "防水石膏板吊顶",
+        "category": "labor",
+        "name": "防水石膏板吊顶",
+        "unit": "M²",
+        "price": 200,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "石膏板吊顶平顶",
+        "category": "labor",
+        "name": "石膏板吊顶（平顶）",
+        "unit": "M²",
+        "price": 150,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "=地面积"
+      },
+      {
+        "id": "芸菁砂艺术墙面",
+        "category": "labor",
+        "name": "芸菁砂艺术墙面",
+        "unit": "M²",
+        "price": 98,
+        "prices": null,
+        "on": false,
+        "group": "coating",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "地面自流平",
+        "category": "labor",
+        "name": "地面自流平",
+        "unit": "M²",
+        "price": 90,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "仅地面选「复合实木地板」时=地面积；选地砖/石塑→0"
+      },
+      {
+        "id": "顶面涂料",
+        "category": "labor",
+        "name": "顶面涂料",
+        "unit": "M²",
+        "price": 58,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "=地面积"
+      },
+      {
+        "id": "墙面粉刷红砖墙处理",
+        "category": "labor",
+        "name": "墙面粉刷（红砖墙处理）",
+        "unit": "M²",
+        "price": 48,
+        "prices": null,
+        "on": false,
+        "group": "wall_base",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "墙面铲除",
+        "category": "labor",
+        "name": "墙面铲除",
+        "unit": "M²",
+        "price": 30,
+        "prices": null,
+        "on": true,
+        "group": "wall_rm",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "腻子粉批刮",
+        "category": "labor",
+        "name": "腻子粉批刮",
+        "unit": "M²",
+        "price": 30,
+        "prices": null,
+        "on": false,
+        "group": "wall_base",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "墙面局部修复基层处理",
+        "category": "labor",
+        "name": "墙面局部修复基层处理",
+        "unit": "M²",
+        "price": 20,
+        "prices": null,
+        "on": true,
+        "group": "wall_base",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "墙纸拆除",
+        "category": "labor",
+        "name": "墙纸拆除",
+        "unit": "M²",
+        "price": 10,
+        "prices": null,
+        "on": false,
+        "group": "wall_rm",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "乳胶漆铲除",
+        "category": "labor",
+        "name": "乳胶漆铲除",
+        "unit": "M²",
+        "price": 10,
+        "prices": null,
+        "on": false,
+        "group": "wall_rm",
+        "formula": "净墙面积×(1+5%损耗)"
+      },
+      {
+        "id": "全空间做水电",
+        "category": "labor",
+        "name": "全空间做水电",
+        "unit": "项",
+        "price": 2800,
+        "prices": null,
+        "on": true,
+        "group": "water",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "水电位改造",
+        "category": "labor",
+        "name": "水电位改造",
+        "unit": "项",
+        "price": 1500,
+        "prices": null,
+        "on": true,
+        "group": "water",
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "入户门改色",
+        "category": "labor",
+        "name": "入户门改色",
+        "unit": "个",
+        "price": 899,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "贴砖",
+        "category": "labor",
+        "name": "贴砖",
+        "unit": "M²",
+        "price": 300,
+        "prices": null,
+        "on": false,
+        "group": "floor_cover",
+        "formula": "贴砖面积=地面积×(1+5%损耗)+墙面积(周长×2.4−门洞−窗洞)"
+      },
+      {
+        "id": "家具改色",
+        "category": "labor",
+        "name": "家具改色",
+        "unit": "M²",
+        "price": 180,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "项/套/樘整体计价，不估算（qty 为整体工程量）"
+      },
+      {
+        "id": "美缝",
+        "category": "labor",
+        "name": "瓷砖美缝",
+        "unit": "M²",
+        "price": 30,
+        "prices": null,
+        "on": true,
+        "group": null,
+        "formula": "同贴砖面积；仅地面选「贴砖」时算，选地板→0"
+      }
+    ]
+  }
+]
