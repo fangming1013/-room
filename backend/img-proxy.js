@@ -62,6 +62,31 @@ function send(res, code, obj) {
 
 const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, {});
+
+  // 图片代理：把豆包 TOS 临时地址换成自己的域名
+  // 起因：TOS 是随机子域名（xxx.tos-cn-beijing.volces.com），小程序 downloadFile
+  // 白名单不支持通配符，客户点"保存到相册"、相册隔天留档都会失败。
+  // 只放行 volces.com，避免变成公开代理被别人薅流量。
+  if (req.url.indexOf('/api/img?') === 0 && req.method === 'GET') {
+    const iu = new URL(req.url, 'http://localhost');
+    const target = iu.searchParams.get('u') || '';
+    let host = '';
+    try { host = new URL(target).hostname; } catch (e) { /* ignore */ }
+    if (!host || !/\.volces\.com$/i.test(host)) return send(res, 400, { ok: false, error: '不支持的图片地址' });
+    try {
+      const r = await fetch(target);
+      if (!r.ok) return send(res, 502, { ok: false, error: '回源失败 ' + r.status });
+      const buf = Buffer.from(await r.arrayBuffer());
+      res.statusCode = 200;
+      res.setHeader('Content-Type', r.headers.get('content-type') || 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.end(buf);
+    } catch (e) {
+      return send(res, 502, { ok: false, error: '回源异常：' + String((e && e.message) || e) });
+    }
+  }
+
   if (req.url === '/api/health') return send(res, 200, {
     ok: true, hasKey: !!KEY, hasArkKey: !!ARK_KEY, arkModel: ARK_DEFAULT_MODEL,
     storage: require('./store.js').status(),

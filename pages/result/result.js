@@ -5,6 +5,7 @@ const sf = require('../../utils/siliconflow.js');
 const store = require('../../utils/store.js');
 const quota = require('../../utils/renderquota.js');
 const gallery = require('../../utils/gallery.js');
+const imgurl = require('../../utils/imgurl.js');
 
 // 8 种装修风格（现场照片风格迁移可选）
 const STYLES = [
@@ -467,7 +468,7 @@ Page({
     };
     if (/^https?:\/\//.test(url)) {
       wx.downloadFile({
-        url,
+        url: imgurl.proxied(url),   // 豆包 TOS 子域名加不了白名单，走自己域名转一层
         success: r => {
           if (r.statusCode === 200 && r.tempFilePath) this._stampAndSave(r.tempFilePath);
           else toPreview('已打开大图，长按可保存');
@@ -611,7 +612,7 @@ Page({
     if (!item || !/^https?:\/\//.test(item.url || '')) return;
     const remote = item.url, ts = item.ts || Date.now();
     wx.downloadFile({
-      url: remote,
+      url: imgurl.proxied(remote),   // 同上：TOS 随机子域名走代理
       success: d => {
         if (d.statusCode !== 200) return;
         const fs = wx.getFileSystemManager();
