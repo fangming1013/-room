@@ -3,6 +3,8 @@ const { round1, fmt1 } = require('../../utils/num.js');
 const brands = require('../../utils/brands.js');
 const store = require('../../utils/store.js');
 const quota = require('../../utils/renderquota.js');
+const VER = require('../../version.js');
+const csnap = require('../../utils/configsnap.js');
 
 const ADMIN_TOKEN = 'admin123';   // 演示口令；正式版走后端校验
 const API_BASE = '';               // 填后端地址(含 https)则同时保存到服务端
@@ -15,6 +17,8 @@ function r2(n) { return Math.round(Number(n) || 0); }
 Page({
   data: {
     token: '', logged: false,
+    verText: 'v' + VER.version + ' · ' + VER.date,   // 手机上看得到自己跑的是哪一版
+    cloudSnaps: [], cloudLoading: false,             // 云端备份列表
     cfgObj: null, tiers: [], adFees: [],
     spaceKeys: [], spaceNames: {},
     activeSpace: 'kitchen', items: [],
@@ -253,8 +257,57 @@ Page({
 
   onToken(e) { this.setData({ token: e.detail.value }); },
   login() {
-    if (this.data.token === ADMIN_TOKEN) this.setData({ logged: true, msg: '' });
-    else this.setData({ msg: '口令错误（演示口令 admin123）' });
+    if (this.data.token === ADMIN_TOKEN) {
+      this.setData({ logged: true, msg: '' });
+      this.loadCloudSnaps();
+    } else this.setData({ msg: '口令错误（演示口令 admin123）' });
+  },
+
+  // ===== 云端备份 =====
+  loadCloudSnaps() {
+    this.setData({ cloudLoading: true });
+    csnap.list().then(l => {
+      this.setData({
+        cloudSnaps: (l || []).map(x => Object.assign({}, x, { timeText: csnap.fmtTime(x.at) })),
+        cloudLoading: false
+      });
+    }).catch(() => this.setData({ cloudLoading: false }));
+  },
+  backupCloudNow() {
+    this.mergeItemsToSpace();
+    this.mergeAux();
+    const obj = this.data.cfgObj;
+    csnap.save(obj, '手动备份').then(r => {
+      if (!r) { wx.showToast({ title: '未登录，无法备份', icon: 'none' }); return; }
+      wx.showToast({ title: '已备份到云端', icon: 'success' });
+      this.loadCloudSnaps();
+    }).catch(e => wx.showToast({ title: '备份失败：' + ((e && e.message) || ''), icon: 'none' }));
+  },
+  restoreCloud(e) {
+    const ts = Number(e.currentTarget.dataset.ts);
+    wx.showModal({
+      title: '从云端恢复？',
+      content: '会用这份快照覆盖当前规则。想保险的话，先点一次「立即备份到云端」把当前状态留底。',
+      success: r => {
+        if (!r.confirm) return;
+        wx.showLoading({ title: '读取中', mask: true });
+        csnap.get(ts).then(data => {
+          wx.hideLoading();
+          if (!data) { wx.showToast({ title: '读取失败', icon: 'none' }); return; }
+          cfg.setOverride(data);
+          try { wx.setStorageSync('config_override_v2', data); } catch (err) {}
+          this.setData({ cfgObj: data, activeSpace: cfg.spaceKeys()[0] });
+          this.buildItems();
+          this.buildAux();
+          this.pushBackup(data);   // 本地也留一份，方便再退回
+          this.loadBackups();
+          wx.showToast({ title: '已从云端恢复', icon: 'success' });
+        }).catch(err => {
+          wx.hideLoading();
+          wx.showToast({ title: '恢复失败：' + ((err && err.message) || ''), icon: 'none' });
+        });
+      }
+    });
   },
 
   onSelectSpace(e) {
@@ -547,6 +600,10 @@ Page({
     try { wx.setStorageSync('config_override_v2', obj); } catch (e) {}
     this.pushBackup(obj);        // 自动留底
     this.loadBackups();
+    // 同步一份到云端：这手机以外的第二份，清缓存/换手机才救得回来
+    csnap.save(obj, '保存')
+      .then(() => this.loadCloudSnaps())
+      .catch(() => {});          // 网络异常不影响本地保存
     if (API_BASE) {
       wx.request({ url: API_BASE + '/api/admin/config', method: 'PUT', data: obj, header: { 'x-admin-token': this.data.token } });
     }

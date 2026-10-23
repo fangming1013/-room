@@ -24,3 +24,7 @@ certs/
 
 # 订单/额度数据（含 openid，不入库）
 backend/data/
+
+# 版本快照与解压目录（本机备份，不入库、不打包）
+backups/
+restore/
