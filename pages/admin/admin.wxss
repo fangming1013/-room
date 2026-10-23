@@ -77,3 +77,5 @@
 .leadAct .btn.sm { margin-right: 12rpx; }
 .paidOn { color: var(--brand-deep); font-weight: 700; }
 .paidOff { color: var(--danger); font-weight: 600; }
+/* 版本号：手机上一眼确认跑的是哪一版，出问题好对照 CHANGELOG */
+.verLine { font-size: 22rpx; color: var(--text-3); margin: -8rpx 0 16rpx 2rpx; }

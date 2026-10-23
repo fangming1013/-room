@@ -1,5 +1,6 @@
 <view class="wrap">
   <view class="head">后台 · 完善价格与项目</view>
+  <view class="verLine">当前版本 {{verText}}</view>
 
   <block wx:if="{{!logged}}">
     <view class="card">
@@ -171,6 +172,24 @@
         </view>
       </view>
       <button wx:if="{{backups.length}}" class="btn" bindtap="clearBackups">清空备份列表</button>
+    </view>
+
+    <!-- 云端备份：手机丢了/清了缓存也能把价格捞回来 -->
+    <view class="card">
+      <view class="ct">云端备份（换手机、清缓存也能恢复）</view>
+      <view class="sub">上面那份备份只在当前手机里。这里每次保存都会同步一份到服务器，最多留 20 份，跟这台手机没关系。</view>
+      <view wx:if="{{cloudLoading}}" class="sub">正在读取…</view>
+      <view wx:elif="{{cloudSnaps.length===0}}" class="sub">还没有云端备份，点下方按钮立即备份一次。</view>
+      <view wx:for="{{cloudSnaps}}" wx:key="ts" class="bk">
+        <view class="bk-info">
+          <view class="bk-time">{{item.timeText}} {{item.label}}</view>
+          <view class="bk-sum">规则快照 · {{item.items}} 个空间</view>
+        </view>
+        <view class="bk-act">
+          <view class="btn sm ok" data-ts="{{item.ts}}" bindtap="restoreCloud">恢复</view>
+        </view>
+      </view>
+      <button class="btn" bindtap="backupCloudNow">立即备份到云端</button>
     </view>
 
     <view wx:if="{{msg}}" class="msg ok">{{msg}}</view>

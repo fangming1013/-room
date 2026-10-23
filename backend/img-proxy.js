@@ -18,6 +18,7 @@
 const http = require('http');
 const crypto = require('crypto');
 const wxpay = require('./wxpay.js');
+const configstore = require('./configstore.js');
 
 const PORT = process.env.PORT || 3000;
 const KEY = process.env.SILICONFLOW_API_KEY || '';
@@ -260,6 +261,33 @@ const server = http.createServer(async (req, res) => {
       console.log('[wxpay] reconcile', JSON.stringify(r));
       return send(res, 200, Object.assign({ ok: true }, r));
     } catch (e) { return send(res, 500, { ok: false, error: String(e && e.message || e) }); }
+  }
+
+  // ===== 规则数据云端快照：老板手填的价格，换手机/清缓存也能恢复 =====
+  if (_u.pathname === '/api/config-snap' && req.method === 'POST') {
+    let buf = '';
+    try { for await (const c of req) buf += c; } catch (e) { return send(res, 400, { ok: false, error: '读取请求失败' }); }
+    let p;
+    try { p = JSON.parse(buf || '{}'); } catch (e) { return send(res, 400, { ok: false, error: 'JSON 解析失败' }); }
+    if (!p.openid) return send(res, 400, { ok: false, error: '缺少 openid' });
+    try {
+      const r = await configstore.save(p.openid, p.data, p.label);
+      return send(res, 200, Object.assign({ ok: true }, r));
+    } catch (e) { return send(res, 500, { ok: false, error: String(e && e.message || e) }); }
+  }
+
+  if (_u.pathname === '/api/config-snap' && req.method === 'GET') {
+    const openid = _u.searchParams.get('openid') || '';
+    const ts = _u.searchParams.get('ts') || '';
+    if (!openid) return send(res, 400, { ok: false, error: '缺少 openid' });
+    try {
+      if (ts) {
+        const d = await configstore.getSnap(openid, Number(ts));
+        if (!d) return send(res, 404, { ok: false, error: '快照不存在' });
+        return send(res, 200, { ok: true, data: d });
+      }
+      return send(res, 200, { ok: true, list: await configstore.listSnaps(openid) });
+    } catch (e) { return send(res, 502, { ok: false, error: String(e && e.message || e) }); }
   }
 
   send(res, 404, { ok: false, error: 'not found' });
