@@ -26,8 +26,8 @@
       </block>
 
       <view class="renderBox">
-        <image wx:if="{{renderUrl}}" src="{{renderUrl}}" mode="aspectFill" class="renderImg"/>
-        <image wx:elif="{{noQuota && demoImg}}" src="{{demoImg}}" mode="aspectFill" class="renderImg demo"/>
+        <image wx:if="{{renderUrl}}" src="{{renderUrl}}" mode="aspectFill" class="renderImg" show-menu-by-longpress="{{true}}"/>
+        <image wx:elif="{{noQuota && demoImg}}" src="{{demoImg}}" mode="aspectFill" class="renderImg demo" show-menu-by-longpress="{{true}}"/>
         <view wx:else class="renderEmpty">{{rendering?'生成中（约 15~60 秒，请勿退出）':'选好风格与照片后点下方按钮'}}</view>
       </view>
       <view wx:if="{{noQuota && demoImg && !renderUrl}}" class="demoTag">同类空间效果示例 · 购买后可生成您家专属效果图</view>
@@ -36,7 +36,7 @@
         <button class="btn saveBtn" bindtap="saveRender">下载到手机相册</button>
         <button class="btn saveBtn" bindtap="previewRender">预览大图</button>
       </view>
-      <view wx:if="{{renderUrl}}" class="saveTip">效果图仅保留 24 小时，请及时下载到手机相册</view>
+      <view wx:if="{{renderUrl}}" class="saveTip">效果图仅保留 24 小时 · 点按钮保存，或长按图片选「保存图片」</view>
       <view wx:if="{{renders.length}}" class="galLine" bindtap="goGallery">查看我的效果图相册（{{renders.length}} 张）›</view>
       <view wx:if="{{renders.length > 1}}" class="album">
         <scroll-view scroll-x class="albumScroll">

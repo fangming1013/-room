@@ -457,14 +457,20 @@ Page({
     const url = this.data.renderUrl;
     if (!url) { wx.showToast({ title: '请先生成效果图', icon: 'none' }); return; }
     wx.showLoading({ title: '正在保存', mask: true });
+    // 任何一步失败 → 直接打开大图，让用户长按保存（不把用户堵在报错上）
+    const toPreview = (tip) => {
+      wx.hideLoading();
+      if (tip) wx.showToast({ title: tip, icon: 'none' });
+      setTimeout(() => wx.previewImage({ urls: [url], current: url }), tip ? 700 : 0);
+    };
     if (/^https?:\/\//.test(url)) {
       wx.downloadFile({
         url,
         success: r => {
-          if (r.statusCode === 200) this._stampAndSave(r.tempFilePath);
-          else { wx.hideLoading(); wx.showToast({ title: '图片下载失败，请重试', icon: 'none' }); }
+          if (r.statusCode === 200 && r.tempFilePath) this._stampAndSave(r.tempFilePath);
+          else toPreview('已打开大图，长按可保存');
         },
-        fail: () => { wx.hideLoading(); wx.showToast({ title: '图片下载失败，请检查网络', icon: 'none' }); }
+        fail: () => toPreview('已打开大图，长按可保存')
       });
     } else {
       this._stampAndSave(url);
@@ -535,14 +541,18 @@ Page({
       success: () => wx.showToast({ title: '已保存到相册', icon: 'success' }),
       fail: (e) => {
         const msg = (e && e.errMsg) || '';
-        // 隐私协议里没声明「相册（仅写入）」时会走到这里，这不是用户权限问题，
-        // 去系统设置里也找不到开关，所以引导长按保存（系统菜单不需要小程序权限）
-        if (/privacy agreement|api scope is not declared/i.test(msg)) {
+        // 隐私指引里没声明「相册（仅写入）」时会走到这里（api scope is not declared）。
+        // 这不是用户权限，系统设置里也没有开关，代码无法绕过；但微信自带的图片预览页
+        // 「长按 → 保存图片」走的是系统菜单，不受小程序隐私声明限制 → 直接把大图打开。
+        if (/privacy agreement|api scope is not declared|not declared/i.test(msg)) {
           wx.showModal({
-            title: '请长按图片保存',
-            content: '长按上方效果图 → 选择「保存图片」，即可存到手机相册。',
-            showCancel: false,
-            confirmText: '知道了'
+            title: '点「打开大图」再长按保存',
+            content: '打开大图后，长按图片 → 选择「保存图片」，即可存到手机相册。',
+            confirmText: '打开大图',
+            cancelText: '取消',
+            success: r => {
+              if (r.confirm) wx.previewImage({ urls: [fp], current: fp });
+            }
           });
         } else if (/auth|deny|denied/i.test(msg)) {
           wx.showModal({
@@ -554,7 +564,14 @@ Page({
         } else if (/cancel/i.test(msg)) {
           // 用户主动取消，不打扰
         } else {
-          wx.showModal({ title: '保存失败', content: String(msg).slice(0, 200), showCancel: false });
+          // 未知错误也给出可用出路，而不是只报错
+          wx.showModal({
+            title: '保存失败',
+            content: '已为你打开大图，长按图片选择「保存图片」即可。',
+            confirmText: '打开大图',
+            cancelText: '关闭',
+            success: r => { if (r.confirm) wx.previewImage({ urls: [fp], current: fp }); }
+          });
         }
       }
     });
