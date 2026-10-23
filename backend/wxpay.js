@@ -107,82 +107,107 @@ async function wxApi(method, urlPath, bodyObj) {
 
 // ==================== 本地存储（订单 / 额度）====================
 // 说明：Render 免费实例无持久盘，重新部署会丢。等接上 Postgres 只需改这两个函数。
-function readStore() {
-  try {
-    const j = JSON.parse(fs.readFileSync(STORE_FILE, 'utf8'));
-    return { orders: j.orders || {}, quotas: j.quotas || {} };
-  } catch (e) {
-    return { orders: {}, quotas: {} };
+// 存储统一走 store.js：Upstash Redis 优先，未配置时回落本地文件。
+// ⚠️ Render 免费实例没有持久磁盘，必须配 UPSTASH_* 否则每次部署都会丢额度。
+const store = require('./store.js');
+
+const GIFT_LIMIT = 100;   // 前 100 个用户首单赠送 1 张（老板 2026-10-23 定），超过自动停
+const GIFT_COUNT = 1;
+
+const K_Q = id => 'quota:' + id;
+const K_O = no => 'order:' + no;
+const K_GIFT = id => 'gift:' + id;
+const K_OIDX = 'orders:index';
+const K_GIFTC = 'gift:count';
+
+async function saveOrder(o) { await store.set(K_O(o.outTradeNo), JSON.stringify(o)); }
+
+async function getOrder(no) {
+  const raw = await store.get(K_O(no));
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch (e) { return null; }
+}
+
+async function indexOrder(no) { await store.push(K_OIDX, no); }
+
+async function listOrders(limit) {
+  const nos = await store.list(K_OIDX, limit || 50);
+  const out = [];
+  for (const no of nos) {
+    const o = await getOrder(no);
+    if (o) out.push(o);
   }
+  return out;
 }
 
-function writeStore(st) {
-  try {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    const tmp = STORE_FILE + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(st));
-    fs.renameSync(tmp, STORE_FILE);
-  } catch (e) {
-    console.error('[wxpay] 存储写入失败：', e && e.message);
-  }
-}
-
-function saveOrder(o) {
-  const st = readStore();
-  st.orders[o.outTradeNo] = o;
-  writeStore(st);
-}
-
-function getOrder(no) {
-  return readStore().orders[no] || null;
-}
-
-function listOrders(limit) {
-  const st = readStore();
-  return Object.keys(st.orders)
-    .map(k => st.orders[k])
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-    .slice(0, limit || 50);
-}
-
-function getBalance(openid) {
+async function getBalance(openid) {
   if (!openid) return 0;
-  const q = readStore().quotas[openid];
-  return (q && Number(q.balance)) || 0;
+  return await store.getNum(K_Q(openid));
 }
 
-function addQuota(openid, n) {
+async function addQuota(openid, n) {
   const add = Math.max(0, Math.round(Number(n) || 0));
-  if (!openid || !add) return 0;
-  const st = readStore();
-  const q = st.quotas[openid] || { balance: 0, total: 0 };
-  q.balance = Number(q.balance || 0) + add;
-  q.total = Number(q.total || 0) + add;
-  q.updatedAt = Date.now();
-  st.quotas[openid] = q;
-  writeStore(st);
-  return q.balance;
+  if (!openid || !add) return await getBalance(openid);
+  return await store.incrBy(K_Q(openid), add);
 }
 
-function consumeQuota(openid, n) {
+// 原子扣减：先 DECRBY，减成负数再补回，避免并发多扣
+async function consumeQuota(openid, n) {
   const used = Math.max(1, Math.round(Number(n) || 1));
   if (!openid) return { ok: false, balance: 0, error: '缺少 openid' };
-  const st = readStore();
-  const q = st.quotas[openid] || { balance: 0, total: 0 };
-  if (Number(q.balance || 0) < used) {
-    return { ok: false, balance: Number(q.balance || 0), error: '额度不足' };
+  const left = await store.incrBy(K_Q(openid), -used);
+  if (left < 0) {
+    await store.incrBy(K_Q(openid), used);
+    return { ok: false, balance: left + used, error: '额度不足' };
   }
-  q.balance = Number(q.balance) - used;
-  q.used = Number(q.used || 0) + used;
-  q.updatedAt = Date.now();
-  st.quotas[openid] = q;
-  writeStore(st);
-  return { ok: true, balance: q.balance };
+  return { ok: true, balance: left };
 }
 
 // 生成失败 / 网络异常时返还
-function refundQuota(openid, n) {
-  return addQuota(openid, n);
+async function refundQuota(openid, n) {
+  return await addQuota(openid, n);
+}
+
+// 首单赠送：每个 openid 永久一次；累计赠送人数到 GIFT_LIMIT 自动停止
+async function claimGift(openid) {
+  if (!openid) return { given: 0, reason: 'no-openid' };
+  const cnt = await store.getNum(K_GIFTC);
+  if (cnt >= GIFT_LIMIT) return { given: 0, reason: 'limit-reached' };
+  const first = await store.setnx(K_GIFT(openid), String(Date.now()));
+  if (!first) return { given: 0, reason: 'already-claimed' };
+  await store.incr(K_GIFTC);
+  const balance = await addQuota(openid, GIFT_COUNT);
+  return { given: GIFT_COUNT, balance: balance };
+}
+
+// 对账：扫最近订单，向微信查真实状态；SUCCESS 但没入账的补上额度
+// 作用：回调因实例休眠/网络问题没到，客户付了钱也不会白付
+async function reconcile(limit) {
+  const nos = await store.list(K_OIDX, limit || 30);
+  const result = { checked: 0, fixed: 0, items: [] };
+  for (const no of nos) {
+    const o = await getOrder(no);
+    if (!o || o.status === 'paid') continue;
+    result.checked++;
+    try {
+      const q = await queryOrder(no);
+      if (q && q.trade_state === 'SUCCESS') {
+        const openid = (q.payer && q.payer.openid) || o.openid;
+        const count = Number(o.count) || 0;
+        if (count > 0) await addQuota(openid, count);
+        o.status = 'paid';
+        o.paidAt = Date.now();
+        o.transactionId = q.transaction_id || '';
+        o.openid = openid;
+        await saveOrder(o);
+        result.fixed++;
+        result.items.push({ outTradeNo: no, count: count, openid: openid });
+      }
+    } catch (e) {
+      result.items.push({ outTradeNo: no, error: String((e && e.message) || e) });
+    }
+  }
+  return result;
 }
 
 // ==================== 下单 ====================
@@ -232,7 +257,7 @@ async function createJsapiOrder(opts) {
     throw new Error('下单失败：' + (data.message || data.code || ('HTTP ' + httpStatus)));
   }
 
-  saveOrder({
+  await saveOrder({
     outTradeNo: outTradeNo,
     openid: openid,
     amount: amount,
@@ -241,6 +266,7 @@ async function createJsapiOrder(opts) {
     status: 'pending',
     createdAt: Date.now()
   });
+  await indexOrder(outTradeNo);   // 进对账索引：回调丢了也能靠这个救回来
 
   const timeStamp = Math.floor(Date.now() / 1000).toString();
   const nonceStr = crypto.randomBytes(16).toString('hex');
@@ -305,7 +331,7 @@ async function handleNotify(rawBody) {
     return { ok: true, ignored: true, state: q.trade_state || 'UNKNOWN' };
   }
 
-  const order = getOrder(outTradeNo);
+  const order = await getOrder(outTradeNo);
   if (order && order.status === 'paid') {
     return { ok: true, duplicate: true, outTradeNo: outTradeNo };
   }
@@ -317,9 +343,9 @@ async function handleNotify(rawBody) {
   const openid = (q.payer && q.payer.openid) || (order && order.openid) || '';
   const paidAmount = (q.amount && q.amount.total) || (order && order.amount) || 0;
 
-  if (count > 0 && openid) addQuota(openid, count);
+  if (count > 0 && openid) await addQuota(openid, count);
 
-  saveOrder({
+  await saveOrder({
     outTradeNo: outTradeNo,
     openid: openid,
     amount: paidAmount,
@@ -330,8 +356,9 @@ async function handleNotify(rawBody) {
     paidAt: Date.now(),
     transactionId: q.transaction_id || ''
   });
+  if (!order) await indexOrder(outTradeNo);   // 回调先于下单记录（极端情况）也要能对账
 
-  return { ok: true, outTradeNo: outTradeNo, count: count, balance: getBalance(openid) };
+  return { ok: true, outTradeNo: outTradeNo, count: count, balance: await getBalance(openid) };
 }
 
 module.exports = {
@@ -345,6 +372,9 @@ module.exports = {
   addQuota,
   consumeQuota,
   refundQuota,
+  claimGift,
+  reconcile,
   listOrders,
-  getOrder
+  getOrder,
+  GIFT_LIMIT
 };

@@ -64,6 +64,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, {});
   if (req.url === '/api/health') return send(res, 200, {
     ok: true, hasKey: !!KEY, hasArkKey: !!ARK_KEY, arkModel: ARK_DEFAULT_MODEL,
+    storage: require('./store.js').status(),
     wxpay: wxpay.status()
   });
 
@@ -147,7 +148,11 @@ const server = http.createServer(async (req, res) => {
     if (!p.code) return send(res, 400, { ok: false, error: '缺少 code' });
     try {
       const openid = await wxpay.getOpenid(p.code);
-      return send(res, 200, { ok: true, openid: openid, balance: wxpay.getBalance(openid) });
+      // 首单赠送：每个 openid 永久 1 张，累计 100 人后自动停止
+      let gift = { given: 0, reason: '' };
+      try { gift = await wxpay.claimGift(openid); } catch (e) { console.error('[gift]', e && e.message); }
+      const balance = await wxpay.getBalance(openid);
+      return send(res, 200, { ok: true, openid: openid, balance: balance, gift: gift.given || 0 });
     } catch (e) { return send(res, 502, { ok: false, error: String(e && e.message || e) }); }
   }
 
@@ -155,7 +160,9 @@ const server = http.createServer(async (req, res) => {
   if (_u.pathname === '/api/quota' && req.method === 'GET') {
     const openid = _u.searchParams.get('openid') || '';
     if (!openid) return send(res, 400, { ok: false, error: '缺少 openid' });
-    return send(res, 200, { ok: true, balance: wxpay.getBalance(openid) });
+    try {
+      return send(res, 200, { ok: true, balance: await wxpay.getBalance(openid) });
+    } catch (e) { return send(res, 502, { ok: false, error: String(e && e.message || e) }); }
   }
 
   // 扣额度（生成前）/ 返还（生成失败）
@@ -166,11 +173,13 @@ const server = http.createServer(async (req, res) => {
     try { p = JSON.parse(buf || '{}'); } catch (e) { return send(res, 400, { ok: false, error: 'JSON 解析失败' }); }
     if (!p.openid) return send(res, 400, { ok: false, error: '缺少 openid' });
     const n = Math.max(1, Math.round(Number(p.n) || 1));
-    if (_u.pathname === '/api/quota/refund') {
-      return send(res, 200, { ok: true, balance: wxpay.refundQuota(p.openid, n) });
-    }
-    const r = wxpay.consumeQuota(p.openid, n);
-    return send(res, r.ok ? 200 : 402, r);
+    try {
+      if (_u.pathname === '/api/quota/refund') {
+        return send(res, 200, { ok: true, balance: await wxpay.refundQuota(p.openid, n) });
+      }
+      const r = await wxpay.consumeQuota(p.openid, n);
+      return send(res, r.ok ? 200 : 402, r);
+    } catch (e) { return send(res, 502, { ok: false, error: String(e && e.message || e) }); }
   }
 
   // 下单：返回 wx.requestPayment 所需参数
@@ -212,7 +221,20 @@ const server = http.createServer(async (req, res) => {
   if (_u.pathname === '/api/orders' && req.method === 'GET') {
     const key = _u.searchParams.get('key') || '';
     if (!process.env.ADMIN_KEY || key !== process.env.ADMIN_KEY) return send(res, 401, { ok: false, error: '口令不对' });
-    return send(res, 200, { ok: true, orders: wxpay.listOrders(100) });
+    try {
+      return send(res, 200, { ok: true, orders: await wxpay.listOrders(100) });
+    } catch (e) { return send(res, 502, { ok: false, error: String(e && e.message || e) }); }
+  }
+
+  // 对账：扫未入账订单，向微信核实并补额度（回调丢了/实例休眠时用）
+  if (_u.pathname === '/api/wxpay-sync') {
+    const key = _u.searchParams.get('key') || '';
+    if (!process.env.ADMIN_KEY || key !== process.env.ADMIN_KEY) return send(res, 401, { ok: false, error: '口令不对' });
+    try {
+      const r = await wxpay.reconcile(30);
+      console.log('[wxpay] reconcile', JSON.stringify(r));
+      return send(res, 200, Object.assign({ ok: true }, r));
+    } catch (e) { return send(res, 500, { ok: false, error: String(e && e.message || e) }); }
   }
 
   send(res, 404, { ok: false, error: 'not found' });
