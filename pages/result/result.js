@@ -6,6 +6,7 @@ const store = require('../../utils/store.js');
 const quota = require('../../utils/renderquota.js');
 const gallery = require('../../utils/gallery.js');
 const imgurl = require('../../utils/imgurl.js');
+const SAMPLE = require('../../utils/samplephoto.js');
 
 // 8 种装修风格（现场照片风格迁移可选）
 const STYLES = [
@@ -83,7 +84,9 @@ Page({
     paySheet: false,
     noQuota: true,          // 默认无额度（免费已取消）→ 先展示示例图
     payReady: false,        // 支付是否已开通
-    demoImg: ''             // 无额度时展示的同类空间示例图
+    demoImg: '',            // 无额度时展示的同类空间示例图
+    sampleMode: false,      // 用内置示例照代替现场照片（审核/演示用）
+    sampleLabel: SAMPLE.label
   },
 
   onLoad(options) {
@@ -251,10 +254,16 @@ Page({
       maxWidth: 1600,
       maxHeight: 1600,
       success: res => {
-        this.setData({ photoPath: res.tempFiles[0].tempFilePath, renderUrl: '', renderErr: '' });
+        this.setData({ photoPath: res.tempFiles[0].tempFilePath, sampleMode: false, renderUrl: '', renderErr: '' });
         this.refreshGenHint();
       }
     });
+  },
+  // 一键用内置示例照：审核员/演示时不用现场找照片也能出图
+  useSample() {
+    this.setData({ photoPath: SAMPLE.uri, sampleMode: true, renderUrl: '', renderErr: '' });
+    this.refreshGenHint();
+    wx.showToast({ title: '已填入示例照片', icon: 'none' });
   },
   chooseStyle(e) {
     this.setData({ selStyle: e.currentTarget.dataset.id, renderUrl: '', renderErr: '' });
@@ -404,6 +413,12 @@ Page({
       // 弹窗强制可见：页面里那行小字经常被忽略/在屏幕外
       wx.showModal({ title: '生成失败', content: String(m).slice(0, 300), showCancel: false, confirmText: '知道了' });
     };
+
+    // 示例照模式：data URI 直接送模型，跳过 compressImage / readFile
+    if (this.data.sampleMode && this.data.photoPath) {
+      sf.genImage({ prompt, imageBase64: this.data.photoPath }).then(finish).catch(fail);
+      return;
+    }
 
     if (this.data.photoPath) {
       // 关键：base64 会膨胀 1.33 倍，iPhone 原图 2~4MB 转完 3~5MB，

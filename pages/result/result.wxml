@@ -16,6 +16,7 @@
           <image wx:if="{{photoPath}}" src="{{photoPath}}" mode="aspectFill" class="photoImg"/>
           <view wx:else class="photoEmpty">＋ 上传现场全局照片（1 张）</view>
         </view>
+        <view wx:if="{{!photoPath}}" class="sampleTip" bindtap="useSample">没有现场照片？<text class="sampleLink">用示例照片试试 ›</text></view>
 
         <view class="payNote">
           <block wx:if="{{quotaInfo.totalLeft > 0}}">可用 <text class="num">{{quotaInfo.totalLeft}}</text> 张<text wx:if="{{quotaInfo.balance > 0}}">（套餐余额）</text></block>

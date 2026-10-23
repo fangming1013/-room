@@ -115,3 +115,6 @@
 .packPer { font-size: 22rpx; color: var(--text-3); margin-top: 10rpx; }
 .psClose { text-align: center; font-size: 26rpx; color: var(--text-3); margin-top: 30rpx; padding: 10rpx; }
 
+/* 示例照片入口（审核员/演示用） */
+.sampleTip { margin-top: 12rpx; font-size: 24rpx; color: var(--text-3); text-align: right; }
+.sampleLink { color: var(--brand); font-weight: 700; }

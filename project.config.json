@@ -31,6 +31,10 @@
   "simulatorPluginLibVersion": {},
   "packOptions": {
     "ignore": [
+      { "type": "folder", "value": "certs" },
+      { "type": "folder", "value": "backend" },
+      { "type": "folder", "value": ".git" },
+      { "type": "folder", "value": "node_modules" },
       { "type": "folder", "value": "docs" },
       { "type": "file", "value": "utils/aux.js" },
       { "type": "prefix", "value": "config.json.bak" },
