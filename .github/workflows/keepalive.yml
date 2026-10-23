@@ -1,0 +1,26 @@
+name: keepalive
+
+# Render 免费层闲置 15 分钟会休眠，休眠后第一次访问要等 ~50 秒。
+# 每 10 分钟戳一次 /api/health，让服务常驻（一个月约 744 小时，仍在免费额度 750 小时内）。
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -s -o /tmp/health.json -w '%{http_code}' --max-time 90 https://room-rchx.onrender.com/api/health || echo 000)
+            echo "try $i -> HTTP $code"
+            if [ "$code" = "200" ]; then
+              cat /tmp/health.json
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "唤醒失败（不影响业务，下次再试）"
+          exit 0

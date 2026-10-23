@@ -264,12 +264,8 @@ Page({
     if (this.data.rendering || !this.data.space) return;
     if (!this.data.selStyle) { const m = '请先选择一种翻新风格'; this.setData({ renderErr: m }); wx.showToast({ title: m, icon: 'none' }); return; }
     if (!this.data.photoPath) { const m = '请先上传一张现场全景照片'; this.setData({ renderErr: m }); wx.showToast({ title: m, icon: 'none' }); return; }
-    // 额度闸门：每日免费 2 张，用完后弹套餐（2026-10-21 老板定）
-    const info = quota.status();
-    if (info.totalLeft <= 0) {
-      this.setData({ paySheet: true, quotaInfo: info });
-      return;
-    }
+    // 额度闸门：不再用本地缓存判断（本地可能过期：换手机、后台加额度、上次部署丢数据）
+    // 统一交给服务端原子扣减，扣不动才弹套餐 —— 避免"明明有 5 张却提示充值"
     this.payAndGenerate();
   },
 
@@ -278,6 +274,12 @@ Page({
   payAndGenerate() {
     quota.consume().then(t => {
       if (!t || !t.ok) {
+        // 网络失败 ≠ 没额度：别把用户往付费页推
+        if (t && t.net) {
+          wx.showToast({ title: '网络有点慢，请再点一次', icon: 'none' });
+          this.refreshQuota();
+          return;
+        }
         this.setData({ paySheet: true, quotaInfo: quota.status() });
         return;
       }
@@ -285,7 +287,7 @@ Page({
       this.refreshQuota();
       this.doGenerateImage();
     }).catch(() => {
-      this.setData({ paySheet: true, quotaInfo: quota.status() });
+      wx.showToast({ title: '网络有点慢，请再点一次', icon: 'none' });
     });
   },
 

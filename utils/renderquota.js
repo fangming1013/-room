@@ -94,23 +94,33 @@ function sync() {
   }).catch(() => status());
 }
 
-// 扣 1 张：优先服务端；没 openid 时退回本地
-// 返回 Promise<{ ok, balance }>
+// 扣 1 张：优先服务端；拿不到 openid 才退回本地
+// 返回 Promise<{ ok, balance, net? }>  net=true 表示网络问题（不是没额度）
 function consume() {
-  const id = auth.get();
-  if (!id) {
-    const q = read();
-    if (q.balance > 0) {
-      q.balance -= 1;
-      q.total = (q.total || 0) + 1;
-      save(q);
-      return Promise.resolve({ ok: true, from: 'local', balance: q.balance });
+  const run = (id) => {
+    if (!id) {
+      const q = read();
+      if (q.balance > 0) {
+        q.balance -= 1;
+        q.total = (q.total || 0) + 1;
+        save(q);
+        return Promise.resolve({ ok: true, from: 'local', balance: q.balance });
+      }
+      return Promise.resolve({ ok: false, balance: 0, error: '额度不足' });
     }
-    return Promise.resolve({ ok: false, balance: 0, error: '额度不足' });
-  }
-  return req('/api/quota/consume', 'POST', { openid: id, n: 1 })
-    .then(d => { setBalance(d.balance); return { ok: true, from: 'server', balance: d.balance }; })
-    .catch(e => ({ ok: false, balance: getBalance(), error: e.message }));
+    return req('/api/quota/consume', 'POST', { openid: id, n: 1 })
+      .then(d => { setBalance(d.balance); return { ok: true, from: 'server', balance: d.balance }; })
+      .catch(e => {
+        const msg = String((e && e.message) || '');
+        // 服务端明确说额度不足 → 才算真没额度；超时/断网不算
+        const net = !/额度不足|insufficient/i.test(msg);
+        return { ok: false, net: net, balance: getBalance(), error: msg };
+      });
+  };
+  const id = auth.get();
+  if (id) return run(id);
+  // 冷启动时登录可能还没回来：等一次登录再扣，避免误判为没额度
+  return auth.ensure().then(i => run(i || '')).catch(() => run(''));
 }
 
 // 生成失败返还（不接受"扣了没出图"）

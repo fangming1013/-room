@@ -30,3 +30,7 @@ services:
         sync: false          # https://room-rchx.onrender.com/api/wxpay-notify
       - key: ADMIN_KEY
         sync: false          # 查订单/对账口令
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false          # 额度/订单持久化（Render 免费层无磁盘，不填就会一部署就丢）
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
