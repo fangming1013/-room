@@ -32,12 +32,18 @@ Page({
     apiMsg: '',            // 生图 API 卡片的即时状态提示
     pending: [],           // 待审核材料商
     leads: [],             // 客资（业主留资线索）
+    adminKey: '', syncing: false, syncMsg: '',   // 云端客资同步
     leadCount: 0, leadToday: 0,
     payIntentCount: 0, payIntentText: '',  // 效果图付费意向（支付未开通期间的点击）
     quotaText: '0 张'
   },
 
-  onLoad() { this.loadLocal(); this.loadPending(); this.loadLeads(); this.refreshQuota(); },
+  onLoad() {
+    let k = '';
+    try { k = wx.getStorageSync('admin_key_v1') || ''; } catch (e) {}
+    this.setData({ adminKey: k });
+    this.loadLocal(); this.loadPending(); this.loadLeads(); this.refreshQuota();
+  },
 
   // ===== 效果图额度（免费已取消，仅老板验收用）=====
   refreshQuota() {
@@ -94,6 +100,50 @@ Page({
       payIntentText: last ? (last.count + ' 张 ¥' + (last.price / 100).toFixed(2)) : ''
     });
   },
+  // ===== 云端客资（客户留的电话在服务器上，换手机也能拉回来）=====
+  onAdminKey(e) {
+    const v = (e.detail.value || '').trim();
+    this.setData({ adminKey: v });
+    try { wx.setStorageSync('admin_key_v1', v); } catch (err) {}
+  },
+
+  syncLeads() {
+    const key = (this.data.adminKey || '').trim();
+    if (!key) { wx.showToast({ title: '先填云端口令', icon: 'none' }); return; }
+    this.setData({ syncing: true, syncMsg: '' });
+    let API = 'https://room-rchx.onrender.com';
+    try { API = require('../../utils/wxauth.js').API || API; } catch (err) {}
+    wx.request({
+      url: API + '/api/leads?limit=200&key=' + encodeURIComponent(key),
+      timeout: 20000,
+      success: r => {
+        const d = r.data || {};
+        if (!d.ok) { this.setData({ syncing: false, syncMsg: '拉取失败：' + (d.error || r.statusCode) }); return; }
+        const pad = n => (n < 10 ? '0' : '') + n;
+        const list = (d.list || []).map(x => {
+          const ts = Number(x.createdAt || 0);
+          const dt = new Date(ts);
+          return Object.assign({}, x, {
+            ts,
+            timeText: ts ? ((dt.getMonth() + 1) + '-' + dt.getDate() + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes())) : '—',
+            typeText: x.decoTypeName || (x.decoType === 'whole' ? '整装' : (x.decoType === 'partial' ? '局改' : '未填')),
+            cityText: x.city || '—',
+            areaText: x.area ? (x.area + '㎡') : '—'
+          });
+        });
+        const today = new Date().setHours(0, 0, 0, 0);
+        this.setData({
+          syncing: false,
+          leads: list,
+          leadCount: list.length,
+          leadToday: list.filter(x => (x.ts || 0) >= today).length,
+          syncMsg: '云端累计 ' + (d.count || list.length) + ' 条，已拉取 ' + list.length + ' 条'
+        });
+      },
+      fail: e => this.setData({ syncing: false, syncMsg: '网络异常：' + (e.errMsg || '') })
+    });
+  },
+
   callLead(e) {
     const phone = e.currentTarget.dataset.phone;
     if (!phone) return;

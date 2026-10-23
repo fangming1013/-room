@@ -52,7 +52,10 @@ function genImage(opts) {
     let apiCfg = {};
     try { apiCfg = wx.getStorageSync('render_api_cfg') || {}; } catch (e) {}
     let model = ((opts.model || apiCfg.model || DEFAULT_MODEL) + '').trim();
-    let key = ((apiCfg.apiKey || '') + '').trim();
+    // 上线版强制走服务端代理：客户端不持有任何 Key，也不直连方舟。
+    // 好处：① 安装包里不可能有 Key ② 小程序后台只需配 room-rchx.onrender.com 一个域名
+    // 后台误填的 Key 一律忽略，避免把正式用户带到直连通道。
+    let key = '';
     const customEp = ((apiCfg.endpoint || '') + '').trim();
 
     // Key 必须是 ark- 开头的服务端 Key；格式不对（如误填"密钥名称"）当作没填，走代理

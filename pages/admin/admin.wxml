@@ -16,6 +16,12 @@
       <view class="ct">客资（{{leadCount}} 条 · 今日 {{leadToday}}）</view>
       <view class="sub">业主在小程序算完价、授权手机号后自动进这里。越早回访意向越强，建议 24 小时内联系。</view>
       <view wx:if="{{payIntentCount>0}}" class="payIntent">效果图付费意向：{{payIntentCount}} 次点击<text wx:if="{{payIntentText}}">（最近选 {{payIntentText}}）</text></view>
+      <!-- 云端客资：客户留的电话存在服务器上，换手机也能拉回来核对 -->
+      <view class="leadSync">
+        <input class="sinp" value="{{adminKey}}" bindinput="onAdminKey" placeholder="云端口令（ADMIN_KEY）" password="{{true}}"/>
+        <view class="btn sm ok" bindtap="syncLeads">{{syncing?'同步中…':'同步云端客资'}}</view>
+      </view>
+      <view wx:if="{{syncMsg}}" class="sub">{{syncMsg}}</view>
       <view wx:if="{{leads.length===0}}" class="sub">还没有客资。把小程序分享给业主，算完价留电话就会出现在这里。</view>
       <view wx:for="{{leads}}" wx:key="id" class="lead">
         <view class="leadTop">
