@@ -19,6 +19,7 @@ const http = require('http');
 const crypto = require('crypto');
 const wxpay = require('./wxpay.js');
 const configstore = require('./configstore.js');
+const store = require('./store.js');
 
 const PORT = process.env.PORT || 3000;
 const KEY = process.env.SILICONFLOW_API_KEY || '';
@@ -61,6 +62,35 @@ function send(res, code, obj) {
   res.end(JSON.stringify(obj));
 }
 
+// ===== 客资入库：客户留的手机号必须到老板手上 =====
+// 存 Redis（key: lead:<手机号>，索引 leads:index），换手机/清缓存/重装都不丢。
+async function saveLead(p) {
+  const phone = String(p.phone || '').replace(/\D/g, '');
+  if (!/^1\d{10}$/.test(phone)) return { ok: false, error: '手机号格式不对' };
+  const rec = {
+    id: phone,
+    name: String(p.name || '').slice(0, 20),
+    phone: phone,
+    city: String(p.city || p.district || '').slice(0, 30),
+    decoType: p.decoType || '',
+    decoTypeName: p.decoTypeName || (p.decoType === 'whole' ? '整装' : (p.decoType === 'partial' ? '局改' : '')),
+    area: Number(p.area) || 0,
+    budget: Number(p.budget) || 0,
+    spaceCount: Number(p.spaceCount) || 0,
+    spaces: Array.isArray(p.spaces) ? p.spaces.slice(0, 20) : [],
+    status: 'new',
+    source: p.source || 'mini-register',
+    createdAt: Number(p.createdAt) || Date.now(),
+    updatedAt: Date.now(),
+    openid: String(p.openid || '')
+  };
+  await store.set('lead:' + phone, JSON.stringify(rec));
+  await store.push('leads:index', phone);
+  await store.incr('leads:count');
+  console.log('[lead] ' + rec.city + ' ' + rec.decoTypeName + ' ' + rec.area + '㎡ ¥' + rec.budget + ' ' + phone.slice(0, 3) + '****' + phone.slice(7));
+  return { ok: true, id: phone };
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, {});
 
@@ -91,6 +121,7 @@ const server = http.createServer(async (req, res) => {
   if (req.url === '/api/health') return send(res, 200, {
     ok: true, hasKey: !!KEY, hasArkKey: !!ARK_KEY, arkModel: ARK_DEFAULT_MODEL,
     storage: require('./store.js').status(),
+    adminKeySet: !!process.env.ADMIN_KEY,
     wxpay: wxpay.status()
   });
 
@@ -141,25 +172,38 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // 客资入口，两种用法：
+  //   A. { phoneCode } → 用微信一键授权 code 换真实手机号（register 页按钮）
+  //   B. { phone, ... } → 直接入库（手动填手机号 / 失败补传队列）
   if (req.url === '/api/lead' && req.method === 'POST') {
     let buf = '';
     try { for await (const c of req) buf += c; } catch (e) { return send(res, 400, { ok: false, error: '读取请求失败' }); }
     let p;
     try { p = JSON.parse(buf || '{}'); } catch (e) { return send(res, 400, { ok: false, error: 'JSON 解析失败' }); }
-    if (!p.phoneCode) return send(res, 400, { ok: false, error: '缺少 phoneCode（需走手机号快速验证组件）' });
-    if (!process.env.WX_APP_ID || !process.env.WX_APP_SECRET) {
-      return send(res, 500, { ok: false, error: '后端未配置 WX_APP_ID / WX_APP_SECRET，无法换取手机号' });
+
+    if (p.phoneCode) {
+      if (!process.env.WX_APP_ID || !process.env.WX_APP_SECRET) {
+        return send(res, 500, { ok: false, error: '后端未配置 WX_APP_ID / WX_APP_SECRET，无法换取手机号' });
+      }
+      try {
+        const info = await getPhoneByCode(p.phoneCode);
+        const phone = info.purePhoneNumber || '';
+        // 换到手机号就顺手入库，不依赖客户端二次上报（少一次失败机会）
+        if (phone) { try { await saveLead(Object.assign({}, p, { phone })); } catch (e) { console.log('[lead] 入库失败 ' + e.message); } }
+        return send(res, 200, { ok: true, phone: phone, countryCode: info.countryCode || '86' });
+      } catch (e) {
+        return send(res, 502, { ok: false, error: String(e && e.message || e) });
+      }
     }
-    try {
-      const info = await getPhoneByCode(p.phoneCode);
-      return send(res, 200, {
-        ok: true,
-        phone: info.purePhoneNumber || '',
-        countryCode: info.countryCode || '86'
-      });
-    } catch (e) {
-      return send(res, 502, { ok: false, error: String(e && e.message || e) });
+
+    if (p.phone) {
+      try {
+        const r = await saveLead(p);
+        return send(res, r.ok ? 200 : 400, r);
+      } catch (e) { return send(res, 500, { ok: false, error: String(e && e.message || e) }); }
     }
+
+    return send(res, 400, { ok: false, error: '缺少 phone 或 phoneCode' });
   }
 
   // ===================== 微信支付 / 额度（v3 模块化实现）=====================
@@ -287,6 +331,28 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, { ok: true, data: d });
       }
       return send(res, 200, { ok: true, list: await configstore.listSnaps(openid) });
+    } catch (e) { return send(res, 502, { ok: false, error: String(e && e.message || e) }); }
+  }
+
+  // ===== 客资：写入在上面 /api/lead 统一处理（换手机号 + 入库）=====
+  // 客资列表：仅老板后台，必须带 ADMIN_KEY（客户手机号属个人信息，不做无保护开放）
+  if (_u.pathname === '/api/leads' && req.method === 'GET') {
+    const key = _u.searchParams.get('key') || '';
+    if (!process.env.ADMIN_KEY) return send(res, 503, { ok: false, error: '服务端未配置 ADMIN_KEY，请在 Render 环境变量中设置' });
+    if (key !== process.env.ADMIN_KEY) return send(res, 401, { ok: false, error: '口令不对' });
+    const limit = Math.min(500, Number(_u.searchParams.get('limit')) || 200);
+    try {
+      const idx = await store.list('leads:index', limit * 3);
+      const seen = Object.create(null), out = [];
+      for (const ph of idx) {
+        if (seen[ph]) continue;
+        seen[ph] = 1;
+        const raw = await store.get('lead:' + ph);
+        if (!raw) continue;
+        try { out.push(JSON.parse(raw)); } catch (e) {}
+        if (out.length >= limit) break;
+      }
+      return send(res, 200, { ok: true, total: out.length, count: await store.getNum('leads:count'), list: out });
     } catch (e) { return send(res, 502, { ok: false, error: String(e && e.message || e) }); }
   }
 
