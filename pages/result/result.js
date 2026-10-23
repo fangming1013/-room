@@ -535,7 +535,16 @@ Page({
       success: () => wx.showToast({ title: '已保存到相册', icon: 'success' }),
       fail: (e) => {
         const msg = (e && e.errMsg) || '';
-        if (/auth|deny|denied/i.test(msg)) {
+        // 隐私协议里没声明「相册（仅写入）」时会走到这里，这不是用户权限问题，
+        // 去系统设置里也找不到开关，所以引导长按保存（系统菜单不需要小程序权限）
+        if (/privacy agreement|api scope is not declared/i.test(msg)) {
+          wx.showModal({
+            title: '请长按图片保存',
+            content: '长按上方效果图 → 选择「保存图片」，即可存到手机相册。',
+            showCancel: false,
+            confirmText: '知道了'
+          });
+        } else if (/auth|deny|denied/i.test(msg)) {
           wx.showModal({
             title: '需要相册权限',
             content: '保存图片需要访问相册，请在设置中开启「保存到相册」权限后重试',
