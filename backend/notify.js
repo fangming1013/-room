@@ -86,8 +86,15 @@ async function pushText(title, html) {
 async function notifyLead(rec, store) {
   if (!ENABLED) return;
   try {
-    // 同一号码只推一次：补传队列 / 客户重复提交都不再吵
-    const first = await store.setnx('leadpushed:' + rec.phone, String(Date.now()));
+    // 同一号码只推一次：补传队列 / 客户重复提交都不再吵。
+    // 但去重本身失败时一律照推——业务上「漏一条客资」远比「多响一次」严重。
+    let first = true;
+    try {
+      first = await store.setnx('leadpushed:' + rec.phone, String(Date.now()));
+    } catch (e) {
+      console.log('[notify] 去重检查失败，改为直接推送：' + (e && e.message));
+      first = true;
+    }
     if (!first) return;
     const title = '新客资 · ' + (rec.city || '未知城市') + ' · ' + (rec.area ? rec.area + '㎡' : '') + ' · ' + money(rec.budget) + '元';
     const r = await pushText(title, buildHtml(rec));
