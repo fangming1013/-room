@@ -4,7 +4,7 @@
 
   <block wx:if="{{!logged}}">
     <view class="card">
-      <view class="row"><text class="lbl">管理员口令</text><input class="inp" password value="{{token}}" bindinput="onToken" placeholder="演示口令 admin123"/></view>
+      <view class="row"><text class="lbl">后台密钥</text><input class="inp" password value="{{token}}" bindinput="onToken" placeholder="输入 ADMIN_KEY（服务器校验）"/></view>
       <button class="btn ok" bindtap="login">登录</button>
       <view wx:if="{{msg}}" class="msg">{{msg}}</view>
     </view>

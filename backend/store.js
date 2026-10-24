@@ -72,6 +72,12 @@ async function set(key, val) {
   return 'OK';
 }
 
+// 带过期时间写入（秒）。本地文件模式没有 TTL，直接落盘（凭证数量少，不影响）
+async function setex(key, val, seconds) {
+  if (remote()) return await cmd(['SET', key, String(val), 'EX', String(Math.max(1, Math.round(seconds) || 60))]);
+  return await set(key, val);
+}
+
 // 仅当 key 不存在时写入，返回 true 表示这一次写入成功（用于"只领一次"）
 async function setnx(key, val) {
   if (remote()) {
@@ -144,4 +150,4 @@ function status() {
   return { backend: remote() ? 'upstash' : 'file', remote: remote() };
 }
 
-module.exports = { get, set, setnx, del, incr, incrBy, getNum, push, list, status };
+module.exports = { get, set, setex, setnx, del, incr, incrBy, getNum, push, list, status };

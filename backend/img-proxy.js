@@ -172,6 +172,42 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // ===== 后台鉴权：口令只在服务端比对，安装包里不留任何明文口令 =====
+  // 原因：小程序包可被反编译，硬编码口令等于把后台送给懂技术的人（2026-10-24 修）
+  const _path = String(req.url || '').split('?')[0];
+  if (_path === '/api/admin/login' && req.method === 'POST') {
+    let buf = '';
+    try { for await (const c of req) buf += c; } catch (e) { return send(res, 400, { ok: false, error: '读取请求失败' }); }
+    let p = {};
+    try { p = JSON.parse(buf || '{}'); } catch (e) { return send(res, 400, { ok: false, error: 'JSON 解析失败' }); }
+    if (!process.env.ADMIN_KEY) return send(res, 503, { ok: false, error: '服务端未配置 ADMIN_KEY' });
+    if (String(p.key || '') !== process.env.ADMIN_KEY) return send(res, 401, { ok: false, error: '密钥不对' });
+    return send(res, 200, { ok: true });
+  }
+
+  // ===== 后台加减额度：必须带密钥，否则普通用户能给自己加图 =====
+  if (_path === '/api/admin/quota' && req.method === 'POST') {
+    let buf = '';
+    try { for await (const c of req) buf += c; } catch (e) { return send(res, 400, { ok: false, error: '读取请求失败' }); }
+    let p = {};
+    try { p = JSON.parse(buf || '{}'); } catch (e) { return send(res, 400, { ok: false, error: 'JSON 解析失败' }); }
+    if (!process.env.ADMIN_KEY || String(p.key || '') !== process.env.ADMIN_KEY) {
+      return send(res, 401, { ok: false, error: '密钥不对' });
+    }
+    const adminOpenid = String(p.openid || '');
+    if (!adminOpenid) return send(res, 400, { ok: false, error: '缺少 openid' });
+    try {
+      if (p.mode === 'clear') {
+        await store.set('quota:' + adminOpenid, '0');
+        return send(res, 200, { ok: true, balance: 0 });
+      }
+      const addN = Math.round(Number(p.n) || 0);
+      if (!addN) return send(res, 400, { ok: false, error: '数量不能为 0' });
+      const bal = await wxpay.addQuota(adminOpenid, addN);
+      return send(res, 200, { ok: true, balance: bal });
+    } catch (e) { return send(res, 500, { ok: false, error: String(e && e.message || e) }); }
+  }
+
   // 客资入口，两种用法：
   //   A. { phoneCode } → 用微信一键授权 code 换真实手机号（register 页按钮）
   //   B. { phone, ... } → 直接入库（手动填手机号 / 失败补传队列）
@@ -242,13 +278,26 @@ const server = http.createServer(async (req, res) => {
     let p;
     try { p = JSON.parse(buf || '{}'); } catch (e) { return send(res, 400, { ok: false, error: 'JSON 解析失败' }); }
     if (!p.openid) return send(res, 400, { ok: false, error: '缺少 openid' });
-    const n = Math.max(1, Math.round(Number(p.n) || 1));
     try {
+      // 返还：必须凭 consume 发的一次性凭证
+      // 原实现谁都能 POST 一下给自己加无限额度（白嫖漏洞），2026-10-24 修
       if (_u.pathname === '/api/quota/refund') {
-        return send(res, 200, { ok: true, balance: await wxpay.refundQuota(p.openid, n) });
+        const tk = String(p.ticket || '');
+        if (!tk) return send(res, 400, { ok: false, error: '缺少返还凭证' });
+        const owner = await store.get('tk:' + tk);
+        if (!owner || owner !== p.openid) {
+          return send(res, 200, { ok: false, error: '返还凭证无效或已使用' });
+        }
+        await store.del('tk:' + tk);
+        return send(res, 200, { ok: true, balance: await wxpay.refundQuota(p.openid, 1) });
       }
+      const n = Math.max(1, Math.round(Number(p.n) || 1));
       const r = await wxpay.consumeQuota(p.openid, n);
-      return send(res, r.ok ? 200 : 402, r);
+      if (!r.ok) return send(res, 402, r);
+      // 一次性返还凭证，10 分钟有效：只有"扣了却没出图"才用得上
+      const ticket = 'tk' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+      await store.setex('tk:' + ticket, p.openid, 600);
+      return send(res, 200, { ok: true, balance: r.balance, ticket: ticket });
     } catch (e) { return send(res, 502, { ok: false, error: String(e && e.message || e) }); }
   }
 

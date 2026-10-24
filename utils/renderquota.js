@@ -109,7 +109,7 @@ function consume() {
       return Promise.resolve({ ok: false, balance: 0, error: '额度不足' });
     }
     return req('/api/quota/consume', 'POST', { openid: id, n: 1 })
-      .then(d => { setBalance(d.balance); return { ok: true, from: 'server', balance: d.balance }; })
+      .then(d => { setBalance(d.balance); return { ok: true, from: 'server', balance: d.balance, ticket: d.ticket || '' }; })
       .catch(e => {
         const msg = String((e && e.message) || '');
         // 服务端明确说额度不足 → 才算真没额度；超时/断网不算
@@ -124,40 +124,40 @@ function consume() {
 }
 
 // 生成失败返还（不接受"扣了没出图"）
+// 服务端要求带 consume 发的一次性凭证 ticket，防止被人当"加额度"接口刷
 function refund(ticket) {
   if (!ticket || !ticket.ok) return Promise.resolve(status());
+  const tk = typeof ticket === 'string' ? ticket : (ticket.ticket || '');
   const id = auth.get();
-  if (!id) {
+  if (!id || !tk) {
     const q = read();
     q.balance += 1;
     if (q.total > 0) q.total -= 1;
     save(q);
     return Promise.resolve(status());
   }
-  return req('/api/quota/refund', 'POST', { openid: id, n: 1 })
+  return req('/api/quota/refund', 'POST', { openid: id, ticket: tk, n: 1 })
     .then(d => { setBalance(d.balance); return status(); })
     .catch(() => status());
 }
 
-// 加额度（后台验收用）
-function addBalance(n) {
+// 加额度（仅后台用，必须带服务端密钥；普通调用走不通）
+function addBalance(n, key) {
   const add = Math.max(0, Number(n) || 0);
   const id = auth.get();
-  if (!id) {
-    const q = read();
-    q.balance += add;
-    save(q);
-    return Promise.resolve(status());
-  }
-  return req('/api/quota/refund', 'POST', { openid: id, n: add })
+  if (!id || !key) return Promise.resolve(status());
+  return req('/api/admin/quota', 'POST', { openid: id, n: add, key: key })
     .then(d => { setBalance(d.balance); return status(); })
     .catch(() => status());
 }
 
 // 清零（后台验收用，模拟消费者没额度）
-function clearBalance() {
-  setBalance(0);
-  return status();
+function clearBalance(key) {
+  const id = auth.get();
+  if (!id || !key) { setBalance(0); return Promise.resolve(status()); }
+  return req('/api/admin/quota', 'POST', { openid: id, mode: 'clear', key: key })
+    .then(d => { setBalance(d.balance); return status(); })
+    .catch(() => { setBalance(0); return status(); });
 }
 
 // 记录付费意向（仅支付未开通时使用）
