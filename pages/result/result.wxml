@@ -19,11 +19,15 @@
         <view wx:if="{{!photoPath}}" class="sampleTip" bindtap="useSample">没有现场照片？<text class="sampleLink">用示例照片试试 ›</text></view>
 
         <view class="payNote">
-          <block wx:if="{{quotaInfo.totalLeft > 0}}">可用 <text class="num">{{quotaInfo.totalLeft}}</text> 张<text wx:if="{{quotaInfo.balance > 0}}">（套餐余额）</text></block>
+          <block wx:if="{{isIOS}}">
+            <block wx:if="{{quotaInfo.totalLeft > 0}}">可用 <text class="num">{{quotaInfo.totalLeft}}</text> 张</block>
+            <block wx:else>iPhone 暂不支持购买效果图</block>
+          </block>
+          <block wx:elif="{{quotaInfo.totalLeft > 0}}">可用 <text class="num">{{quotaInfo.totalLeft}}</text> 张<text wx:if="{{quotaInfo.balance > 0}}">（套餐余额）</text></block>
           <block wx:else>效果图按张购买 · 6.99 元 / 5 张起</block>
-          <text class="buyLink" bindtap="openPaySheet">{{quotaInfo.totalLeft > 0 ? '加购' : '看价格'}}</text>
+          <text wx:if="{{!isIOS}}" class="buyLink" bindtap="openPaySheet">{{quotaInfo.totalLeft > 0 ? '加购' : '看价格'}}</text>
         </view>
-        <button class="btn renderBtn" loading="{{rendering}}" bindtap="genRender">{{renderUrl?'重新生成':(rendering?'生成中…':(genHint?genHint:(noQuota?(payReady?'购买后生成':'预约效果图'):'开始生成')))}}</button>
+        <button class="btn renderBtn" loading="{{rendering}}" bindtap="genRender">{{renderUrl?'重新生成':(rendering?'生成中…':(genHint?genHint:(noQuota?(isIOS?'暂无可用额度':(payReady?'购买后生成':'预约效果图')):'开始生成')))}}</button>
       </block>
 
       <view class="renderBox">
@@ -31,7 +35,7 @@
         <image wx:elif="{{noQuota && demoImg}}" src="{{demoImg}}" mode="aspectFill" class="renderImg demo" show-menu-by-longpress="{{true}}"/>
         <view wx:else class="renderEmpty">{{rendering?'生成中（约 15~60 秒，请勿退出）':'选好风格与照片后点下方按钮'}}</view>
       </view>
-      <view wx:if="{{noQuota && demoImg && !renderUrl}}" class="demoTag">同类空间效果示例 · 购买后可生成您家专属效果图</view>
+      <view wx:if="{{noQuota && demoImg && !renderUrl}}" class="demoTag">{{isIOS ? '同类空间效果示例' : '同类空间效果示例 · 购买后可生成您家专属效果图'}}</view>
       <view wx:if="{{renderErr}}" class="hint rerr">{{renderErr}}</view>
       <view wx:if="{{renderUrl}}" class="btnRow">
         <button class="btn saveBtn" bindtap="saveRender">下载到手机相册</button>
@@ -70,8 +74,8 @@
 
 <view wx:else class="wrap"><view class="head">暂无数据，请先录入空间</view></view>
 
-<!-- 效果图套餐面板（每日免费额度用完后弹出） -->
-<view wx:if="{{paySheet}}" class="payMask" catchtap="closePaySheet">
+<!-- 效果图套餐面板（每日免费额度用完后弹出）· iOS 端整块不渲染（虚拟支付合规） -->
+<view wx:if="{{paySheet && !isIOS}}" class="payMask" catchtap="closePaySheet">
   <view class="paySheet" catchtap="noopPay">
     <view class="psTitle">{{payReady ? '选择效果图套餐' : '效果图即将开放'}}</view>
     <view class="psSub">{{payReady ? '购买后即可生成，套餐余额长期有效。' : '支付通道正在开通中，现在还不能购买。选定套餐表示你的意向，开通后会在小程序内公告。'}}</view>

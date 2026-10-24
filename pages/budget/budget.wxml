@@ -95,7 +95,9 @@
       <view wx:if="{{item.qrCode}}" class="addwx" data-url="{{item.qrCode}}" catchtap="showQR">加微信</view>
     </view>
     <view class="bopt reset" bindtap="resetBrand"><text class="bon">清除品牌（用档位价）</text></view>
-    <view class="btn supplierEntry" bindtap="toSupplier">材料商入驻（上架新品牌）</view>
+    <!-- 材料商入驻是阶段三功能，且涉及平台服务收费：阶段一（消费者算价器）提审期间不露出，
+         避免审核把它当成"平台入驻付费"要求资质 / 判 iOS 虚拟支付。要开时把 false 改 true。 -->
+    <view wx:if="{{false}}" class="btn supplierEntry" bindtap="toSupplier">材料商入驻（上架新品牌）</view>
     <view class="btn ghost" bindtap="closeBrand">关闭</view>
   </view>
 </view>
