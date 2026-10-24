@@ -180,6 +180,14 @@
       <button wx:if="{{backups.length}}" class="btn" bindtap="clearBackups">清空备份列表</button>
     </view>
 
+    <!-- 测试工具：上线前用另一个身份跑验收，避免"管理员测不出问题" -->
+    <view class="card">
+      <view class="ct">测试工具 · 模拟新用户</view>
+      <view class="sub">管理员手机上攒了手填价格、历史预算、相册、后台解锁标记，所以永远测不出新客户遇到的坑。这里可以一键把本机清成"刚下载"的状态。</view>
+      <view class="sub">保留：价格配置、后台入口、云端口令。清掉：注册信息、历史预算、相册、授权拒绝记录、效果图额度缓存。</view>
+      <button class="btn no" bindtap="resetAsNewUser">一键重置为「新用户」状态</button>
+    </view>
+
     <!-- 云端备份：手机丢了/清了缓存也能把价格捞回来 -->
     <view class="card">
       <view class="ct">云端备份（换手机、清缓存也能恢复）</view>

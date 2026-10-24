@@ -100,6 +100,26 @@ Page({
       payIntentText: last ? (last.count + ' 张 ¥' + (last.price / 100).toFixed(2)) : ''
     });
   },
+  // ===== 测试工具：把本机重置成"刚下载"的状态 =====
+  // 管理员账号测不出问题，不是权限更大，是本机攒了手填价格/历史/相册/解锁标记。
+  // 保留价格配置和后台入口，其余清空，用来模拟新客户第一次打开。
+  resetAsNewUser() {
+    wx.showModal({
+      title: '重置为「新用户」？',
+      content: '会清掉本机的注册信息、历史预算、相册记录、授权拒绝标记。价格配置和后台入口会保留。',
+      success: r => {
+        if (!r.confirm) return;
+        const KEEP = ['config_override_v2', 'admin_ok', 'admin_key_v1', 'pay_cfg', 'render_api_cfg'];
+        const kept = {};
+        KEEP.forEach(k => { try { const v = wx.getStorageSync(k); if (v !== '' && v != null) kept[k] = v; } catch (e) {} });
+        try { wx.clearStorageSync(); } catch (e) {}
+        Object.keys(kept).forEach(k => { try { wx.setStorageSync(k, kept[k]); } catch (e) {} });
+        wx.showToast({ title: '已重置，重新进入', icon: 'success' });
+        setTimeout(() => wx.reLaunch({ url: '/pages/home/home' }), 900);
+      }
+    });
+  },
+
   // ===== 云端客资（客户留的电话在服务器上，换手机也能拉回来）=====
   onAdminKey(e) {
     const v = (e.detail.value || '').trim();
