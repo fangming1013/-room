@@ -6,6 +6,7 @@ const store = require('../../utils/store.js');
 const quota = require('../../utils/renderquota.js');
 const gallery = require('../../utils/gallery.js');
 const imgurl = require('../../utils/imgurl.js');
+const leadapi = require('../../utils/leadapi.js');
 const SAMPLE = require('../../utils/samplephoto.js');
 
 // 8 种装修风格（现场照片风格迁移可选）
@@ -309,8 +310,10 @@ Page({
           return;
         }
         this.setData({ quotaInfo: quota.status() });
+        // iOS 不能在线买图 → 走「预约设计师出图」，把它变成一条带尺寸+风格的高质量线索
+        // 关键：不弹"不支持"，用户看到的是一次正常的服务预约
         if (this._isIOS) {
-          wx.showToast({ title: 'iPhone 暂不支持在线购买', icon: 'none' });
+          this.bookDesigner();
           return;
         }
         this.setData({ paySheet: true });
@@ -325,18 +328,48 @@ Page({
   },
 
   // ===== 套餐购买面板 =====
-  // iOS 端不出面板、不展示价格、不引导去别处（微信规则：连价格文案都算违规）
+  // iOS 端不渲染面板、不展示价格（微信虚拟支付规则：连价格文案都算违规）
+  // 但也不能甩一句"不支持"——直接转到正常的服务预约，用户无感
   openPaySheet() {
-    if (this._isIOS) {
-      wx.showModal({
-        title: 'iPhone 暂不支持在线购买',
-        content: '效果图购买功能暂未在 iPhone 上开放。预算计算、方案查看和同类空间效果示例都可以正常使用。',
-        showCancel: false,
-        confirmText: '知道了'
-      });
-      return;
-    }
+    if (this._isIOS) { this.bookDesigner(); return; }
     this.setData({ paySheet: true, quotaInfo: quota.status() });
+  },
+
+  // 预约设计师出图（iOS 无额度时的正常出路）
+  // 承诺只写"1 个工作日内联系"，不承诺免费张数，避免变成变相虚拟商品兑换
+  bookDesigner() {
+    const u = store.getUser() || {};
+    const sp = this.data.space || {};
+    if (!u || !u.phone) { this.goRegister(); return; }
+    const st = STYLES.find(s => s.id === this.data.selStyle) || {};
+    wx.showModal({
+      title: '预约设计师出图',
+      content: '设计师会按你录入的尺寸（' + (sp.w || '-') + '×' + (sp.d || '-') + '×' + (sp.h || '-') + ' cm）和「' + (st.name || '你选定的') + '」风格单独绘制，1 个工作日内电话联系你确认。',
+      confirmText: '预约',
+      cancelText: '再想想',
+      success: r => {
+        if (!r.confirm) return;
+        wx.showLoading({ title: '提交中', mask: true });
+        leadapi.push({
+          name: u.name || '', phone: u.phone, city: u.city || '',
+          decoType: u.decoType || '', decoTypeName: u.decoTypeName || '',
+          area: u.area || 0, budget: (sp.quote && sp.quote.total) || 0,
+          spaceCount: 1,
+          spaces: [{ name: sp.name, w: sp.w, d: sp.d, h: sp.h }],
+          createdAt: Date.now(),
+          wantRender: true,
+          wantStyle: st.name || '',
+          wantSpace: sp.name || ''
+        }).then(() => {
+          wx.hideLoading();
+          wx.showToast({ title: '已预约，请留意来电', icon: 'none', duration: 2600 });
+        }).catch(() => {
+          wx.hideLoading();
+          // 已存本地队列，联网后自动补传，不对用户说"失败"
+          wx.showToast({ title: '已记录，联网后自动提交', icon: 'none', duration: 2600 });
+        });
+      }
+    });
   },
   closePaySheet() { this.setData({ paySheet: false }); },
   noopPay() {},

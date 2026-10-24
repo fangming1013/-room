@@ -84,7 +84,11 @@ async function saveLead(p) {
     source: p.source || 'mini-register',
     createdAt: Number(p.createdAt) || Date.now(),
     updatedAt: Date.now(),
-    openid: String(p.openid || '')
+    openid: String(p.openid || ''),
+    // 预约出图（iOS 无额度时的转化动作）：客户主动发起，必须单独推给老板
+    wantRender: !!p.wantRender,
+    wantStyle: String(p.wantStyle || '').slice(0, 30),
+    wantSpace: String(p.wantSpace || '').slice(0, 30)
   };
   // 老记录兼容：客户重复提交时不要把「已联系」打回「新线索」，也别覆盖首次时间
   let prev = null;
@@ -98,6 +102,10 @@ async function saveLead(p) {
     rec.createdAt = prev.createdAt || rec.createdAt;
     rec.note = prev.note || '';
     rec.times = (Number(prev.times) || 1) + 1;
+    // 预约标记是累积的：客户先前约过、这次只是重新算价，不能被覆盖成 false
+    rec.wantRender = rec.wantRender || !!prev.wantRender;
+    if (!rec.wantStyle && prev.wantStyle) rec.wantStyle = prev.wantStyle;
+    if (!rec.wantSpace && prev.wantSpace) rec.wantSpace = prev.wantSpace;
   } else {
     rec.firstAt = rec.createdAt;
     rec.times = 1;
@@ -107,8 +115,8 @@ async function saveLead(p) {
   await store.push('leads:index', phone);
   await store.incr('leads:count');
   console.log('[lead] ' + rec.city + ' ' + rec.decoTypeName + ' ' + rec.area + '㎡ ¥' + rec.budget + ' ' + phone.slice(0, 3) + '****' + phone.slice(7));
-  // 留资即推送（异步，不阻塞客户；内部已做同号去重）
-  notify.notifyLead(rec, store).catch((e) => console.log('[lead] 推送跳过 ' + (e && e.message)));
+  // 留资即推送（异步，不阻塞客户；普通提交同号去重，预约出图强制推）
+  notify.notifyLead(rec, store, { force: !!p.wantRender }).catch((e) => console.log('[lead] 推送跳过 ' + (e && e.message)));
   return { ok: true, id: phone };
 }
 

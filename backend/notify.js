@@ -52,11 +52,16 @@ function dash(s) { return s ? String(s) : '—'; }
 function buildHtml(rec) {
   const phone = String(rec.phone || '');
   const tel = phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
-  const spaces = (rec.spaces && rec.spaces.length) ? rec.spaces.join('、') : (rec.spaceCount ? rec.spaceCount + ' 个空间' : '—');
+  const spaces = (rec.spaces && rec.spaces.length)
+    ? (typeof rec.spaces[0] === 'string' ? rec.spaces.join('、') : rec.spaces.map(s => s.name || '').filter(Boolean).join('、') || (rec.spaceCount + ' 个空间'))
+    : (rec.spaceCount ? rec.spaceCount + ' 个空间' : '—');
+  const want = !!rec.wantRender;
 
   return '<div style="font-size:15px;line-height:1.9;color:#222">'
-    + '<p style="margin:0 0 8px"><b style="color:#07c160">新客资</b>　'
+    + '<p style="margin:0 0 8px"><b style="color:' + (want ? '#d4380d' : '#07c160') + '">' + (want ? '预约出图' : '新客资') + '</b>　'
     + dash(rec.city) + '　' + dash(rec.decoTypeName) + '　' + (rec.area ? rec.area + '㎡' : '—') + '</p>'
+    + (want ? '<p style="margin:0 0 8px;padding:8px 10px;background:#fff7e6;border-left:3px solid #d4380d;color:#8a4b00">'
+        + '客户想要「' + dash(rec.wantSpace) + '」的「' + dash(rec.wantStyle) + '」效果图，需人工出图后发给他</p>' : '')
     + '<p style="margin:0 0 8px;font-size:22px;color:#d4380d;font-weight:700">预算 ¥' + money(rec.budget) + '</p>'
     + '<p style="margin:0 0 4px;color:#555">涉及空间：' + spaces + '</p>'
     + '<p style="margin:0 0 14px;color:#555">称呼：' + dash(rec.name) + '</p>'
@@ -83,20 +88,29 @@ async function pushText(title, html) {
 }
 
 // 入口：saveLead 成功后调用（fire-and-forget）
-async function notifyLead(rec, store) {
+// opts.force = 预约出图这类「客户主动发起的新动作」，同号也要再响一次（否则老板会漏）
+async function notifyLead(rec, store, opts) {
   if (!ENABLED) return;
+  const force = !!(opts && opts.force);
   try {
-    // 同一号码只推一次：补传队列 / 客户重复提交都不再吵。
-    // 但去重本身失败时一律照推——业务上「漏一条客资」远比「多响一次」严重。
-    let first = true;
-    try {
-      first = await store.setnx('leadpushed:' + rec.phone, String(Date.now()));
-    } catch (e) {
-      console.log('[notify] 去重检查失败，改为直接推送：' + (e && e.message));
-      first = true;
+    if (!force) {
+      // 同一号码只推一次：补传队列 / 客户重复提交都不再吵。
+      // 但去重本身失败时一律照推——业务上「漏一条客资」远比「多响一次」严重。
+      let first = true;
+      try {
+        first = await store.setnx('leadpushed:' + rec.phone, String(Date.now()));
+      } catch (e) {
+        console.log('[notify] 去重检查失败，改为直接推送：' + (e && e.message));
+        first = true;
+      }
+      if (!first) return;
+    } else {
+      // 强制推送后刷新标记，避免紧随其后的普通提交再推一遍
+      try { await store.set('leadpushed:' + rec.phone, String(Date.now())); } catch (e) {}
     }
-    if (!first) return;
-    const title = '新客资 · ' + (rec.city || '未知城市') + ' · ' + (rec.area ? rec.area + '㎡' : '') + ' · ' + money(rec.budget) + '元';
+    const title = (rec.wantRender ? '预约出图 · ' : '新客资 · ')
+      + (rec.city || '未知城市') + ' · ' + (rec.area ? rec.area + '㎡' : '')
+      + (rec.wantRender ? (' · ' + (rec.wantStyle || '')) : (' · ' + money(rec.budget) + '元'));
     const r = await pushText(title, buildHtml(rec));
     if (!r.ok) {
       // 推失败要放开去重标记，否则这条客资永远补不推
