@@ -125,6 +125,13 @@ Page({
   // 入驻费缴纳：真调微信支付；未配商户号时降级为提示线下缴纳
   payAd() {
     const d = this.data;
+    // iOS 虚拟支付合规：B 端入驻费属平台服务收费，iOS 端一律不走在线支付
+    let isIOS = false;
+    try {
+      const info = (wx.getDeviceInfo ? wx.getDeviceInfo() : wx.getSystemInfoSync()) || {};
+      isIOS = String(info.platform || '').toLowerCase() === 'ios';
+    } catch (e) {}
+    if (isIOS) { wx.showToast({ title: 'iPhone 暂不支持在线缴费', icon: 'none' }); return; }
     if (!d.supplier) { wx.showToast({ title: '请先填公司/品牌名', icon: 'none' }); return; }
     if (!d.products.length) { wx.showToast({ title: '请至少添加一款产品', icon: 'none' }); return; }
     const isYear = d.feePlan === 'year';

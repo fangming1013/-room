@@ -83,16 +83,31 @@ Page({
     packs: quota.PACKS,
     paySheet: false,
     noQuota: true,          // 默认无额度（免费已取消）→ 先展示示例图
-    payReady: false,        // 支付是否已开通
+    payReady: false,        // 支付是否已开通（iOS 端恒为 false，合规要求）
+    isIOS: false,           // iOS 端整块隐藏付费板块（微信虚拟支付规则）
     demoImg: '',            // 无额度时展示的同类空间示例图
     sampleMode: false,      // 用内置示例照代替现场照片（审核/演示用）
     sampleLabel: SAMPLE.label
   },
 
   onLoad(options) {
+    // iOS 端合规硬约束（微信《平台运营规范》虚拟支付）：iOS 上不得出现任何
+    // 购买路径、价格展示、已购余额展示，也不能引导去 App/公众号/安卓支付。
+    // 违反的后果不是拒审这么简单——已上线的小程序会被暂停 iOS 端访问。
+    // 所以 iOS 端：算价/留资/看示例图全保留，只把「买图」这一块整块摘掉。
+    let isIOS = false;
+    try {
+      const d = (wx.getDeviceInfo ? wx.getDeviceInfo() : wx.getSystemInfoSync()) || {};
+      isIOS = String(d.platform || '').toLowerCase() === 'ios';
+    } catch (e) {}
+    this._isIOS = isIOS;
     // 生图启用：部署了自有代理并填了 PROXY_BASE（1.0.1 全用户可用）
     const apiCfg = wx.getStorageSync('render_api_cfg') || {};
-    this.setData({ hasApi: !!(apiCfg && apiCfg.apiKey) || !!sf.PROXY_BASE, payEnabled: sf.payEnabled() });
+    this.setData({
+      isIOS: isIOS,
+      hasApi: !!(apiCfg && apiCfg.apiKey) || !!sf.PROXY_BASE,
+      payEnabled: !isIOS && sf.payEnabled()
+    });
     let space;
     if (options && options.rec) {
       const rec = (store.getHistory() || []).find(r => r.id === options.rec);
@@ -142,8 +157,11 @@ Page({
     this.refreshQuota();
   },
 
+  // 本端是否允许走支付：iOS 恒 false（微信虚拟支付规则，见 onLoad 注释）
+  payOn() { return !this._isIOS && sf.payEnabled(); },
+
   checkReg() {
-    this.setData({ registered: !!store.getUser(), payEnabled: sf.payEnabled() });
+    this.setData({ registered: !!store.getUser(), payEnabled: this.payOn() });
   },
 
   refreshQuota() {
@@ -151,7 +169,7 @@ Page({
     this.setData({
       quotaInfo: info,
       noQuota: info.totalLeft <= 0,      // 没额度：不出图，只展示示例 + 购买入口
-      payReady: sf.payEnabled(),         // 支付是否已开通（没有商户号时为 false）
+      payReady: this.payOn(),            // iOS 端恒 false；安卓看后台开关
       demoImg: this._demoFor()
     });
     // 额度真身在服务端：本地先渲染，再拉一次校准（换手机/清缓存后也能拿回已购张数）
@@ -290,7 +308,12 @@ Page({
           this.refreshQuota();
           return;
         }
-        this.setData({ paySheet: true, quotaInfo: quota.status() });
+        this.setData({ quotaInfo: quota.status() });
+        if (this._isIOS) {
+          wx.showToast({ title: 'iPhone 暂不支持在线购买', icon: 'none' });
+          return;
+        }
+        this.setData({ paySheet: true });
         return;
       }
       this._ticket = t;
@@ -302,11 +325,24 @@ Page({
   },
 
   // ===== 套餐购买面板 =====
-  openPaySheet() { this.setData({ paySheet: true, quotaInfo: quota.status() }); },
+  // iOS 端不出面板、不展示价格、不引导去别处（微信规则：连价格文案都算违规）
+  openPaySheet() {
+    if (this._isIOS) {
+      wx.showModal({
+        title: 'iPhone 暂不支持在线购买',
+        content: '效果图购买功能暂未在 iPhone 上开放。预算计算、方案查看和同类空间效果示例都可以正常使用。',
+        showCancel: false,
+        confirmText: '知道了'
+      });
+      return;
+    }
+    this.setData({ paySheet: true, quotaInfo: quota.status() });
+  },
   closePaySheet() { this.setData({ paySheet: false }); },
   noopPay() {},
 
   buyPack(e) {
+    if (this._isIOS) return;   // 双保险：iOS 绝不进支付流程
     const id = e.currentTarget.dataset.id;
     const pack = (quota.PACKS || []).find(p => p.id === id);
     if (!pack) return;
