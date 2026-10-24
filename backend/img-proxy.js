@@ -20,6 +20,7 @@ const crypto = require('crypto');
 const wxpay = require('./wxpay.js');
 const configstore = require('./configstore.js');
 const store = require('./store.js');
+const notify = require('./notify.js');
 
 const PORT = process.env.PORT || 3000;
 const KEY = process.env.SILICONFLOW_API_KEY || '';
@@ -84,10 +85,29 @@ async function saveLead(p) {
     updatedAt: Date.now(),
     openid: String(p.openid || '')
   };
+  // 老记录兼容：客户重复提交时不要把「已联系」打回「新线索」，也别覆盖首次时间
+  let prev = null;
+  try {
+    const raw = await store.get('lead:' + phone);
+    if (raw) prev = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch (e) { /* 读不到就当新线索 */ }
+  if (prev) {
+    rec.status = prev.status || rec.status;
+    rec.firstAt = prev.firstAt || prev.createdAt || rec.createdAt;
+    rec.createdAt = prev.createdAt || rec.createdAt;
+    rec.note = prev.note || '';
+    rec.times = (Number(prev.times) || 1) + 1;
+  } else {
+    rec.firstAt = rec.createdAt;
+    rec.times = 1;
+  }
+
   await store.set('lead:' + phone, JSON.stringify(rec));
   await store.push('leads:index', phone);
   await store.incr('leads:count');
   console.log('[lead] ' + rec.city + ' ' + rec.decoTypeName + ' ' + rec.area + '㎡ ¥' + rec.budget + ' ' + phone.slice(0, 3) + '****' + phone.slice(7));
+  // 留资即推送（异步，不阻塞客户；内部已做同号去重）
+  notify.notifyLead(rec, store).catch((e) => console.log('[lead] 推送跳过 ' + (e && e.message)));
   return { ok: true, id: phone };
 }
 

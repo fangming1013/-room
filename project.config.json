@@ -40,6 +40,8 @@
       { "type": "folder", "value": "tools" },
       { "type": "folder", "value": "docs" },
       { "type": "file", "value": "utils/aux.js" },
+      { "type": "file", "value": "CHANGELOG.md" },
+      { "type": "file", "value": "README.md" },
       { "type": "prefix", "value": "config.json.bak" },
       { "type": "prefix", "value": "config.json.bak2" },
       { "type": "prefix", "value": "config.json.bak3" },
