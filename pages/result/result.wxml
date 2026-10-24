@@ -18,16 +18,14 @@
         </view>
         <view wx:if="{{!photoPath}}" class="sampleTip" bindtap="useSample">没有现场照片？<text class="sampleLink">用示例照片试试 ›</text></view>
 
+        <!-- 双端文案保持一致：都是「按需生成」这一个语义。
+             iOS 不多一句"不支持"，安卓也不多一句"必须买"——用户不应该感到自己用的是残次品。 -->
         <view class="payNote">
-          <block wx:if="{{isIOS}}">
-            <block wx:if="{{quotaInfo.totalLeft > 0}}">可用 <text class="num">{{quotaInfo.totalLeft}}</text> 张</block>
-            <block wx:else>iPhone 暂不支持购买效果图</block>
-          </block>
-          <block wx:elif="{{quotaInfo.totalLeft > 0}}">可用 <text class="num">{{quotaInfo.totalLeft}}</text> 张<text wx:if="{{quotaInfo.balance > 0}}">（套餐余额）</text></block>
-          <block wx:else>效果图按张购买 · 6.99 元 / 5 张起</block>
-          <text wx:if="{{!isIOS}}" class="buyLink" bindtap="openPaySheet">{{quotaInfo.totalLeft > 0 ? '加购' : '看价格'}}</text>
+          <block wx:if="{{quotaInfo.totalLeft > 0}}">可用 <text class="num">{{quotaInfo.totalLeft}}</text> 张<text wx:if="{{quotaInfo.balance > 0}}">（套餐余额）</text></block>
+          <block wx:else>效果图按需生成<text wx:if="{{!isIOS && payReady}}"> · 6.99 元 / 5 张起</text></block>
+          <text wx:if="{{!isIOS && payReady}}" class="buyLink" bindtap="openPaySheet">{{quotaInfo.totalLeft > 0 ? '加购' : '看价格'}}</text>
         </view>
-        <button class="btn renderBtn" loading="{{rendering}}" bindtap="genRender">{{renderUrl?'重新生成':(rendering?'生成中…':(genHint?genHint:(noQuota?(isIOS?'暂无可用额度':(payReady?'购买后生成':'预约效果图')):'开始生成')))}}</button>
+        <button class="btn renderBtn" loading="{{rendering}}" bindtap="genRender">{{renderUrl?'重新生成':(rendering?'生成中…':(genHint?genHint:(noQuota?(isIOS?'预约设计师出图':(payReady?'购买后生成':'预约效果图')):'开始生成')))}}</button>
       </block>
 
       <view class="renderBox">
@@ -35,7 +33,7 @@
         <image wx:elif="{{noQuota && demoImg}}" src="{{demoImg}}" mode="aspectFill" class="renderImg demo" show-menu-by-longpress="{{true}}"/>
         <view wx:else class="renderEmpty">{{rendering?'生成中（约 15~60 秒，请勿退出）':'选好风格与照片后点下方按钮'}}</view>
       </view>
-      <view wx:if="{{noQuota && demoImg && !renderUrl}}" class="demoTag">{{isIOS ? '同类空间效果示例' : '同类空间效果示例 · 购买后可生成您家专属效果图'}}</view>
+      <view wx:if="{{noQuota && demoImg && !renderUrl}}" class="demoTag">同类空间效果示例 · 你的空间可按此风格定制</view>
       <view wx:if="{{renderErr}}" class="hint rerr">{{renderErr}}</view>
       <view wx:if="{{renderUrl}}" class="btnRow">
         <button class="btn saveBtn" bindtap="saveRender">下载到手机相册</button>

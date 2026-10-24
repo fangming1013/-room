@@ -31,6 +31,10 @@ function toPayload(lead) {
     spaces: lead.spaces || [],
     createdAt: lead.createdAt || Date.now(),
     openid: openid,
+    // 预约出图需求（iOS 无额度时的转化动作）：服务端据此单独推送，不等同普通算价客资
+    wantRender: !!lead.wantRender,
+    wantStyle: lead.wantStyle || '',
+    wantSpace: lead.wantSpace || '',
     // 第三方客资台字段（忽略也无妨）
     district: lead.city || '',
     community: '',
@@ -42,7 +46,10 @@ function toPayload(lead) {
     client_extra: {
       spaces: lead.spaces || [],
       status: lead.status || 'new',
-      createdAt: lead.createdAt || Date.now()
+      createdAt: lead.createdAt || Date.now(),
+      wantRender: !!lead.wantRender,
+      wantStyle: lead.wantStyle || '',
+      wantSpace: lead.wantSpace || ''
     }
   };
 }

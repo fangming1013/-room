@@ -131,7 +131,19 @@ Page({
       const info = (wx.getDeviceInfo ? wx.getDeviceInfo() : wx.getSystemInfoSync()) || {};
       isIOS = String(info.platform || '').toLowerCase() === 'ios';
     } catch (e) {}
-    if (isIOS) { wx.showToast({ title: 'iPhone 暂不支持在线缴费', icon: 'none' }); return; }
+    // iOS 上不做在线支付，但这不是"功能不支持"，而是 B 端正常的「先提交、后对公结算」——
+    // 企业客户本来就要发票、要走公账，界面不能摆出一副残缺样。
+    if (isIOS) {
+      const yr = d.feePlan === 'year';
+      wx.showModal({
+        title: '提交入驻资料',
+        content: '资料审核通过后，我们会联系你办理' + (yr ? '年付 3000 元' : '月付 300 元') + '入驻并开具发票，无需在小程序内支付。',
+        confirmText: '提交资料',
+        cancelText: '再想想',
+        success: r => { if (r.confirm) this.submit(); }
+      });
+      return;
+    }
     if (!d.supplier) { wx.showToast({ title: '请先填公司/品牌名', icon: 'none' }); return; }
     if (!d.products.length) { wx.showToast({ title: '请至少添加一款产品', icon: 'none' }); return; }
     const isYear = d.feePlan === 'year';
