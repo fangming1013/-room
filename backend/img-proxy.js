@@ -209,6 +209,23 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ===== 后台加减额度：必须带密钥，否则普通用户能给自己加图 =====
+  // 推送自测：只发一条样例到老板微信，不写客资库（用于验证通知链路是否通）
+  if (_path === '/api/admin/push-test' && req.method === 'POST') {
+    let buf = '';
+    try { for await (const c of req) buf += c; } catch (e) { }
+    let p = {};
+    try { p = JSON.parse(buf || '{}'); } catch (e) { }
+    if (!process.env.ADMIN_KEY || String(p.key || '') !== process.env.ADMIN_KEY) {
+      return send(res, 401, { ok: false, error: '密钥不对' });
+    }
+    const sample = {
+      phone: '13800138000', city: '样例·深圳', decoTypeName: '局改', area: 68,
+      budget: 12300, spaces: ['厨房', '卫生间'], name: '王先生'
+    };
+    const r = await notify.pushText('推送自测（样例，非真实客户）', notify.buildHtml(sample));
+    return send(res, r.ok ? 200 : 502, r);
+  }
+
   if (_path === '/api/admin/quota' && req.method === 'POST') {
     let buf = '';
     try { for await (const c of req) buf += c; } catch (e) { return send(res, 400, { ok: false, error: '读取请求失败' }); }
