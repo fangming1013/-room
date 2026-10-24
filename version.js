@@ -14,6 +14,6 @@ module.exports = {
   name: 'room-mini',
   version: '1.1.2',
   date: '2026-10-24',
-  uploaded: '',
+  uploaded: '2026-10-24 17:52',
   note: '安全修复：后台密钥改服务端校验（包内不留口令）+ 返还改一次性凭证（堵住自己加额度）'
 };
