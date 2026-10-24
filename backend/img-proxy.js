@@ -23,6 +23,7 @@ const store = require('./store.js');
 const notify = require('./notify.js');
 
 const PORT = process.env.PORT || 3000;
+const STARTED_AT = new Date().toISOString();
 const KEY = process.env.SILICONFLOW_API_KEY || '';
 const API = 'https://api.siliconflow.cn/v1/images/generations';
 const DEFAULT_MODEL = 'Kwai-Kolors/Kolors';
@@ -142,7 +143,9 @@ const server = http.createServer(async (req, res) => {
     ok: true, hasKey: !!KEY, hasArkKey: !!ARK_KEY, arkModel: ARK_DEFAULT_MODEL,
     storage: require('./store.js').status(),
     adminKeySet: !!process.env.ADMIN_KEY,
-    wxpay: wxpay.status()
+    wxpay: wxpay.status(),
+    // feats.startedAt = 进程启动时间，用来判断 Render 是否已按新代码重启
+    feats: { leadPush: notify.enabled, startedAt: STARTED_AT }
   });
 
   if (req.url === '/api/gen-image' && req.method === 'POST') {
