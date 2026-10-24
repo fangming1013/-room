@@ -106,7 +106,9 @@ function genImage(opts) {
 
     // ---------- ② 自有代理 ----------
     // 没有本地 Key（正常情况：Key 只在服务端）→ 走代理，由服务端注入 ARK_API_KEY
-    const base = customEp || PROXY_BASE;
+    // 上线版一律走服务端代理：忽略本机残留的自定义 endpoint，
+    // 否则老用户手机里存过的旧地址会绕过服务端（Key 与额度都失控）。
+    const base = PROXY_BASE;
     if (!base) { reject(new Error('未配置图像代理地址')); return; }
     wx.request({
       url: base + '/api/gen-image',
