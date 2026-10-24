@@ -6,7 +6,8 @@ const quota = require('../../utils/renderquota.js');
 const VER = require('../../version.js');
 const csnap = require('../../utils/configsnap.js');
 
-const ADMIN_TOKEN = 'admin123';   // 演示口令；正式版走后端校验
+// 后台密钥不在包里硬编码（小程序包可被反编译）。
+// 登录时提交给服务端 /api/admin/login 校验，密钥值 = Render 环境变量 ADMIN_KEY。
 const API_BASE = '';               // 填后端地址(含 https)则同时保存到服务端
 const BACKUP_KEY = 'config_backup_history';
 const BACKUP_MAX = 30;             // 最多保留 30 份快照
@@ -55,7 +56,9 @@ Page({
     }).catch(() => {});
   },
   addQuota() {
-    quota.addBalance(10).then(st => {
+    const key = (this.data.adminKey || this.data.token || '').trim();
+    if (!key) { wx.showToast({ title: '请重新登录后台', icon: 'none' }); return; }
+    quota.addBalance(10, key).then(st => {
       this.setData({ quotaText: st.balance > 0 ? (st.balance + ' 张（套餐余额）') : '0 张' });
       wx.showToast({ title: '已加 10 张', icon: 'success' });
     });
@@ -66,7 +69,7 @@ Page({
       content: '用于模拟普通消费者：一张都生成不了。已生成过的效果图不受影响。',
       success: r => {
         if (!r.confirm) return;
-        quota.clearBalance();
+        quota.clearBalance((this.data.adminKey || this.data.token || '').trim());
         this.refreshQuota();
         wx.showToast({ title: '已清零', icon: 'none' });
       }
@@ -327,10 +330,30 @@ Page({
 
   onToken(e) { this.setData({ token: e.detail.value }); },
   login() {
-    if (this.data.token === ADMIN_TOKEN) {
-      this.setData({ logged: true, msg: '' });
-      this.loadCloudSnaps();
-    } else this.setData({ msg: '口令错误（演示口令 admin123）' });
+    const key = (this.data.token || '').trim();
+    if (!key) { this.setData({ msg: '请输入后台密钥' }); return; }
+    this.setData({ msg: '验证中…' });
+    let API = 'https://room-rchx.onrender.com';
+    try { API = require('../../utils/wxauth.js').API || API; } catch (err) {}
+    wx.request({
+      url: API + '/api/admin/login',
+      method: 'POST',
+      header: { 'Content-Type': 'application/json' },
+      data: { key: key },
+      timeout: 20000,
+      success: r => {
+        const d = r.data || {};
+        if (!d.ok) { this.setData({ msg: d.error || '密钥不对' }); return; }
+        // 登录成功：记住这把钥匙，加额度/拉客资/云端备份都用它
+        try { wx.setStorageSync('admin_ok', 1); } catch (err) {}
+        try { wx.setStorageSync('admin_key_v1', key); } catch (err) {}
+        this.setData({ logged: true, msg: '', adminKey: key }, () => {
+          this.loadCloudSnaps();
+          try { this.syncLeads(); } catch (err) {}
+        });
+      },
+      fail: () => this.setData({ msg: '网络异常：请确认手机能访问服务器，再试一次' })
+    });
   },
 
   // ===== 云端备份 =====

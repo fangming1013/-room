@@ -12,8 +12,8 @@
 
 module.exports = {
   name: 'room-mini',
-  version: '1.1.1',
+  version: '1.1.2',
   date: '2026-10-24',
-  uploaded: '2026-10-24 17:35',
-  note: '提审候选版：多身份验收工具 + 生图强制走服务端代理（忽略历史自定义 endpoint）'
+  uploaded: '',
+  note: '安全修复：后台密钥改服务端校验（包内不留口令）+ 返还改一次性凭证（堵住自己加额度）'
 };
