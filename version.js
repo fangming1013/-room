@@ -12,8 +12,8 @@
 
 module.exports = {
   name: 'room-mini',
-  version: '1.1.5',
-  date: '2026-10-25',
-  uploaded: '2026-10-25 04:53',
-  note: '双端体验统一：清除全部「暂不支持」文案；iOS 无额度改为「预约设计师出图」（转高质量线索，同号强制推送），不再出现任何残缺提示'
+  version: '1.2.0',
+  date: '2026-10-27',
+  uploaded: '',
+  note: '接入小程序虚拟支付（wx.requestVirtualPayment）：iOS 与安卓同一套收银台，价格/套餐/购买/余额两端完全一致。待开通拿到 OfferID/AppKey 后上传'
 };

@@ -7,6 +7,7 @@ const quota = require('../../utils/renderquota.js');
 const gallery = require('../../utils/gallery.js');
 const imgurl = require('../../utils/imgurl.js');
 const leadapi = require('../../utils/leadapi.js');
+const vp = require('../../utils/vpay.js');
 const SAMPLE = require('../../utils/samplephoto.js');
 
 // 8 种装修风格（现场照片风格迁移可选）
@@ -102,6 +103,12 @@ Page({
       isIOS = String(d.platform || '').toLowerCase() === 'ios';
     } catch (e) {}
     this._isIOS = isIOS;
+    // 虚拟支付若已开通，iOS 端就能正常卖（价格/购买/余额全部放开），
+    // 不再是"能看不能买"——两端界面才真正一致。查一次服务端状态，缓存 10 分钟。
+    vp.checkReady().then(ok => {
+      this._vpayReady = ok;
+      this.setData({ vpayReady: ok, payEnabled: this.payOn(), payReady: this.payOn() });
+    });
     // 生图启用：部署了自有代理并填了 PROXY_BASE（1.0.1 全用户可用）
     const apiCfg = wx.getStorageSync('render_api_cfg') || {};
     this.setData({
@@ -158,8 +165,10 @@ Page({
     this.refreshQuota();
   },
 
-  // 本端是否允许走支付：iOS 恒 false（微信虚拟支付规则，见 onLoad 注释）
-  payOn() { return !this._isIOS && sf.payEnabled(); },
+  // 本端是否允许走支付
+  // 虚拟支付开通后 iOS 也能买（走 Apple IAP，合规），此时两端逻辑完全一致；
+  // 未开通时 iOS 恒 false，只保留免费额度 + 预约出图。
+  payOn() { return !!this._vpayReady || (!this._isIOS && sf.payEnabled()); },
 
   checkReg() {
     this.setData({ registered: !!store.getUser(), payEnabled: this.payOn() });
@@ -310,9 +319,9 @@ Page({
           return;
         }
         this.setData({ quotaInfo: quota.status() });
-        // iOS 不能在线买图 → 走「预约设计师出图」，把它变成一条带尺寸+风格的高质量线索
+        // 本端不能在线买（虚拟支付未开通）→ 走「预约设计师出图」，把它变成一条高质量线索
         // 关键：不弹"不支持"，用户看到的是一次正常的服务预约
-        if (this._isIOS) {
+        if (!this.payOn()) {
           this.bookDesigner();
           return;
         }
@@ -328,10 +337,10 @@ Page({
   },
 
   // ===== 套餐购买面板 =====
-  // iOS 端不渲染面板、不展示价格（微信虚拟支付规则：连价格文案都算违规）
-  // 但也不能甩一句"不支持"——直接转到正常的服务预约，用户无感
+  // 虚拟支付开通后，iOS 与安卓一样展示价格与套餐（iOS 底层走 Apple IAP，合规）
+  // 未开通时 iOS 不能走普通支付（会被风控掐），直接转到正常的服务预约，用户无感
   openPaySheet() {
-    if (this._isIOS) { this.bookDesigner(); return; }
+    if (!this.payOn()) { this.bookDesigner(); return; }
     this.setData({ paySheet: true, quotaInfo: quota.status() });
   },
 
@@ -374,11 +383,34 @@ Page({
   closePaySheet() { this.setData({ paySheet: false }); },
   noopPay() {},
 
+  // 购买套餐：优先走虚拟支付——这是唯一能让 iOS 也正常买的合规通道
   buyPack(e) {
-    if (this._isIOS) return;   // 双保险：iOS 绝不进支付流程
     const id = e.currentTarget.dataset.id;
     const pack = (quota.PACKS || []).find(p => p.id === id);
     if (!pack) return;
+    if (this.data.paying) return;
+
+    this.setData({ paying: true });
+    vp.buy(id, pack).then(() => {
+      // 到账由微信推送后端完成，前端只负责拉取确认（不自己加额度，防作弊）
+      this.setData({ paying: false, paySheet: false });
+      wx.showToast({ title: '支付成功，正在到账', icon: 'none' });
+      this._pollQuota(3);
+    }).catch(err => {
+      const c = (err && err.code) || '';
+      this.setData({ paying: false });
+      if (c === 'CANCEL') return;
+      if (c === 'NET') { wx.showToast({ title: '网络不稳，请再试一次', icon: 'none' }); return; }
+      if (c === 'VPAY_NOT_READY' || c === 'UNSUPPORTED') { this._fallbackBuy(pack); return; }
+      wx.showToast({ title: (err && err.message) || '支付失败', icon: 'none' });
+    });
+  },
+
+  // 虚拟支付尚未开通时的退路（过渡期用，开通后不会再走到这里）
+  //   安卓 → 普通微信支付
+  //   iOS  → 绝不能用普通支付卖虚拟商品（会被风控掐断支付能力），转为预约出图
+  _fallbackBuy(pack) {
+    if (this._isIOS) { this.setData({ paySheet: false }); this.bookDesigner(); return; }
 
     // 支付通道还没开通 → 只记「付费意向」，不扣钱
     // 目的：先测出到底有多少人愿意为效果图付费，等商户号下来直接切真实支付
@@ -400,14 +432,12 @@ Page({
       return;
     }
 
-    if (this.data.paying) return;
     this.setData({ paying: true });
     sf.createPayOrder({ amount: pack.price, count: pack.count, desc: '效果图 ' + pack.count + ' 张' })
       .then(payArgs => {
         wx.requestPayment({
           ...payArgs,
           success: () => {
-            // 加额度这一步由微信服务器回调后端完成，前端只负责拉取确认
             this.setData({ paying: false, paySheet: false });
             wx.showToast({ title: '支付成功，正在到账', icon: 'none' });
             this._pollQuota(3);

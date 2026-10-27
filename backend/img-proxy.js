@@ -18,6 +18,7 @@
 const http = require('http');
 const crypto = require('crypto');
 const wxpay = require('./wxpay.js');
+const vpay = require('./vpay.js');
 const configstore = require('./configstore.js');
 const store = require('./store.js');
 const notify = require('./notify.js');
@@ -153,7 +154,9 @@ const server = http.createServer(async (req, res) => {
     adminKeySet: !!process.env.ADMIN_KEY,
     wxpay: wxpay.status(),
     // feats.startedAt = 进程启动时间，用来判断 Render 是否已按新代码重启
-    feats: { leadPush: notify.enabled, startedAt: STARTED_AT }
+    feats: { leadPush: notify.enabled, startedAt: STARTED_AT },
+    // 虚拟支付是否就绪：小程序端据此决定 iOS 端要不要放开价格与购买入口
+    vpay: vpay.status()
   });
 
   if (req.url === '/api/gen-image' && req.method === 'POST') {
@@ -347,6 +350,68 @@ const server = http.createServer(async (req, res) => {
       await store.setex('tk:' + ticket, p.openid, 600);
       return send(res, 200, { ok: true, balance: r.balance, ticket: ticket });
     } catch (e) { return send(res, 502, { ok: false, error: String(e && e.message || e) }); }
+  }
+
+  // ===== 虚拟支付：iOS 也能合法卖虚拟商品（这才是"直接解决"，不是绕） =====
+  // 下单：返回 wx.requestVirtualPayment 所需三要素。未开通时返回 501，小程序端自动回落到旧逻辑。
+  if (_u.pathname === '/api/vpay-order' && req.method === 'POST') {
+    let buf = '';
+    try { for await (const c of req) buf += c; } catch (e) { return send(res, 400, { ok: false, error: '读取请求失败' }); }
+    let p;
+    try { p = JSON.parse(buf || '{}'); } catch (e) { return send(res, 400, { ok: false, error: 'JSON 解析失败' }); }
+    if (!vpay.isConfigured()) {
+      return send(res, 501, { ok: false, code: 'VPAY_NOT_READY', error: '虚拟支付未开通', status: vpay.status() });
+    }
+    try {
+      const r = await vpay.createOrder({ code: p.code, productId: p.productId, price: p.price, count: p.count });
+      // 只记「待发货」——真正加额度必须等微信推送，不能信客户端说"我付了"
+      await store.set('vorder:' + r.outTradeNo, JSON.stringify({
+        openid: r.openid,
+        count: Math.max(1, Number(p.count) || 1),
+        productId: String(p.productId || ''),
+        price: Number(p.price) || 0,
+        at: Date.now(),
+        status: 'pending'
+      }));
+      return send(res, 200, { ok: true, payParams: r.payParams, outTradeNo: r.outTradeNo });
+    } catch (e) { return send(res, 500, { ok: false, error: String(e && e.message || e) }); }
+  }
+
+  // 发货推送（xpay_goods_deliver_notify）：米大师 POST 过来，验签 → 幂等 → 加额度
+  // ⚠️ 上线前必须对照官方文档核对：签名规则、字段名、响应体格式。
+  //    这段现在默认拒绝一切（没配 AppKey 就验不过），所以不会变成"免费加额度"的后门。
+  if (_u.pathname === '/api/vpay-notify' && req.method === 'POST') {
+    let buf = '';
+    try { for await (const c of req) buf += c; } catch (e) { /* ignore */ }
+    const v = vpay.verifyNotify(req.headers, buf);
+    if (!v.ok) {
+      console.error('[vpay] 验签失败：' + v.error);
+      return send(res, 401, { errcode: 1, errmsg: v.error || 'sign error' });
+    }
+    const d = v.data || {};
+    const no = String(d.OutTradeNo || d.outTradeNo || '');
+    if (!no) return send(res, 400, { errcode: 1, errmsg: 'missing OutTradeNo' });
+    try {
+      const raw = await store.get('vorder:' + no);
+      if (!raw) {
+        console.error('[vpay] 未知订单 ' + no);
+        return send(res, 200, { errcode: 0, errmsg: 'ok' });   // 回成功，避免无限重推
+      }
+      const od = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      // 幂等锁：同一单只会加一次
+      const first = await store.setnx('vorder_done:' + no, String(Date.now()));
+      if (first) {
+        await wxpay.addQuota(od.openid, od.count);
+        od.status = 'delivered';
+        od.deliveredAt = Date.now();
+        await store.set('vorder:' + no, JSON.stringify(od));
+        console.log('[vpay] 发货 ' + no + ' → ' + od.count + ' 张');
+      }
+      return send(res, 200, { errcode: 0, errmsg: 'ok' });
+    } catch (e) {
+      console.error('[vpay] 发货失败 ' + no + '：' + (e && e.message));
+      return send(res, 500, { errcode: 1, errmsg: 'deliver failed' });
+    }
   }
 
   // 下单：返回 wx.requestPayment 所需参数
