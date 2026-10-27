@@ -391,11 +391,16 @@ Page({
     if (this.data.paying) return;
 
     this.setData({ paying: true });
-    vp.buy(id, pack).then(() => {
+    vp.buy(id).then(r => {
       // 到账由微信推送后端完成，前端只负责拉取确认（不自己加额度，防作弊）
       this.setData({ paying: false, paySheet: false });
-      wx.showToast({ title: '支付成功，正在到账', icon: 'none' });
-      this._pollQuota(3);
+      if (r && r.delivered) {
+        wx.showToast({ title: '已到账 ' + r.count + ' 张', icon: 'success' });
+      } else {
+        // 付款成功但推送还没到：如实说，别让用户以为没付上
+        wx.showToast({ title: '支付成功，额度稍后自动到账', icon: 'none' });
+      }
+      this._pollQuota(4);
     }).catch(err => {
       const c = (err && err.code) || '';
       this.setData({ paying: false });

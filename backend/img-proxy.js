@@ -353,7 +353,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ===== 虚拟支付：iOS 也能合法卖虚拟商品（这才是"直接解决"，不是绕） =====
-  // 下单：返回 wx.requestVirtualPayment 所需三要素。未开通时返回 501，小程序端自动回落到旧逻辑。
+  // 下单：只收 code + productId。价格与张数由服务端道具表决定，客户端传什么都不采信。
   if (_u.pathname === '/api/vpay-order' && req.method === 'POST') {
     let buf = '';
     try { for await (const c of req) buf += c; } catch (e) { return send(res, 400, { ok: false, error: '读取请求失败' }); }
@@ -363,54 +363,113 @@ const server = http.createServer(async (req, res) => {
       return send(res, 501, { ok: false, code: 'VPAY_NOT_READY', error: '虚拟支付未开通', status: vpay.status() });
     }
     try {
-      const r = await vpay.createOrder({ code: p.code, productId: p.productId, price: p.price, count: p.count });
-      // 只记「待发货」——真正加额度必须等微信推送，不能信客户端说"我付了"
+      const r = await vpay.createOrder({ code: p.code, productId: p.productId, attach: p.productId });
+      // 只记「待发货」——加额度必须等微信推送，不能信客户端说"我付了"
       await store.set('vorder:' + r.outTradeNo, JSON.stringify({
         openid: r.openid,
-        count: Math.max(1, Number(p.count) || 1),
+        count: r.count,                       // 服务端定，客户端改不了
         productId: String(p.productId || ''),
-        price: Number(p.price) || 0,
+        price: r.price,
         at: Date.now(),
         status: 'pending'
       }));
-      return send(res, 200, { ok: true, payParams: r.payParams, outTradeNo: r.outTradeNo });
+      return send(res, 200, { ok: true, payParams: r.payParams, outTradeNo: r.outTradeNo, count: r.count });
     } catch (e) { return send(res, 500, { ok: false, error: String(e && e.message || e) }); }
   }
 
-  // 发货推送（xpay_goods_deliver_notify）：米大师 POST 过来，验签 → 幂等 → 加额度
-  // ⚠️ 上线前必须对照官方文档核对：签名规则、字段名、响应体格式。
-  //    这段现在默认拒绝一切（没配 AppKey 就验不过），所以不会变成"免费加额度"的后门。
+  // 支付到账查询：前端付款成功后轮询这里，避免「支付成功但推送慢」时界面停住
+  if (_u.pathname === '/api/vpay-status' && req.method === 'GET') {
+    const no = String(_u.searchParams.get('no') || '');
+    if (!no) return send(res, 400, { ok: false, error: '缺少订单号' });
+    try {
+      const raw = await store.get('vorder:' + no);
+      if (!raw) return send(res, 404, { ok: false, error: '订单不存在' });
+      const od = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const done = await store.get('vorder_done:' + no);
+      return send(res, 200, { ok: true, status: done ? 'delivered' : (od.status || 'pending'), count: od.count });
+    } catch (e) { return send(res, 500, { ok: false, error: String(e && e.message || e) }); }
+  }
+
+  // 发货推送（xpay_goods_deliver_notify）
+  // 官方口径：推送可能是 XML 或 JSON；响应必须与请求同格式，否则重推最多 15 次。
+  //   XML  →  <?xml?><xml><ErrCode>0</ErrCode><ErrMsg>success</ErrMsg></xml>
+  //   JSON →  {"ErrCode":0,"ErrMsg":"success"}
+  if (_u.pathname === '/api/vpay-notify' && req.method === 'GET') {
+    // 配置推送 URL 时微信先发 GET 握手，校验通过要原样回 echostr
+    const q = {
+      signature: _u.searchParams.get('signature') || '',
+      timestamp: _u.searchParams.get('timestamp') || '',
+      nonce: _u.searchParams.get('nonce') || ''
+    };
+    if (!vpay.verifyUrlSign(q, vpay.cfg().pushToken)) {
+      res.statusCode = 401; res.end('sign error'); return;
+    }
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.end(_u.searchParams.get('echostr') || 'ok');
+    return;
+  }
+
   if (_u.pathname === '/api/vpay-notify' && req.method === 'POST') {
     let buf = '';
     try { for await (const c of req) buf += c; } catch (e) { /* ignore */ }
-    const v = vpay.verifyNotify(req.headers, buf);
-    if (!v.ok) {
-      console.error('[vpay] 验签失败：' + v.error);
-      return send(res, 401, { errcode: 1, errmsg: v.error || 'sign error' });
+    const d = vpay.parseNotify(buf);
+    const isXml = !!(d && d.isXml) || /^\s*</.test(buf);
+    const reply = vpay.buildReply(isXml);
+
+    const replyOk = () => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', reply.type);
+      res.end(reply.body);
+    };
+    const replyBad = (msg) => {
+      console.error('[vpay] ' + msg + '  body=' + String(buf).slice(0, 300));
+      res.statusCode = 200;   // 内容非 0 微信会重推，不要用 5xx（会被当网络错误掩盖原因）
+      res.setHeader('Content-Type', reply.type);
+      res.end(isXml
+        ? '<?xml version="1.0" encoding="UTF-8"?><xml><ErrCode>1</ErrCode><ErrMsg>' + msg + '</ErrMsg></xml>'
+        : JSON.stringify({ ErrCode: 1, ErrMsg: msg }));
+    };
+
+    if (!d) return replyBad('parse failed');
+    if (d.Encrypt) return replyBad('encrypted push not supported, set plaintext mode');
+    const ev = String(d.Event || '');
+    if (ev && ev !== 'xpay_goods_deliver_notify') {
+      console.log('[vpay] 忽略事件 ' + ev);
+      return replyOk();
     }
-    const d = v.data || {};
-    const no = String(d.OutTradeNo || d.outTradeNo || '');
-    if (!no) return send(res, 400, { errcode: 1, errmsg: 'missing OutTradeNo' });
+
+    const no = String(d.OutTradeNo || '');
+    if (!no) return replyBad('missing OutTradeNo');
+
     try {
       const raw = await store.get('vorder:' + no);
       if (!raw) {
-        console.error('[vpay] 未知订单 ' + no);
-        return send(res, 200, { errcode: 0, errmsg: 'ok' });   // 回成功，避免无限重推
+        // 不是我们的单（或存储抖动）→ 回成功避免无限重推，但必须留痕人工核
+        console.error('[vpay] 未知订单 ' + no + '，已忽略，请核对后台交易');
+        return replyOk();
       }
       const od = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      // 幂等锁：同一单只会加一次
+
+      // 防伪：推送里的用户和道具必须与下单时一致（单号是随机的，加上这两层基本无法伪造）
+      if (d.OpenId && od.openid && String(d.OpenId) !== String(od.openid)) return replyBad('openid mismatch');
+      if (d.ProductId && od.productId && String(d.ProductId) !== String(od.productId)) return replyBad('product mismatch');
+
+      // 幂等锁：同一单只加一次（微信重推是常态）
       const first = await store.setnx('vorder_done:' + no, String(Date.now()));
       if (first) {
         await wxpay.addQuota(od.openid, od.count);
         od.status = 'delivered';
         od.deliveredAt = Date.now();
+        od.mchOrderNo = d.MchOrderNo || '';
+        od.actualPrice = Number(d.ActualPrice) || 0;
         await store.set('vorder:' + no, JSON.stringify(od));
-        console.log('[vpay] 发货 ' + no + ' → ' + od.count + ' 张');
+        console.log('[vpay] 发货 ' + no + ' → ' + od.count + ' 张（实付 ' + od.actualPrice + ' 分）');
       }
-      return send(res, 200, { errcode: 0, errmsg: 'ok' });
+      return replyOk();
     } catch (e) {
       console.error('[vpay] 发货失败 ' + no + '：' + (e && e.message));
-      return send(res, 500, { errcode: 1, errmsg: 'deliver failed' });
+      return replyBad('deliver failed');
     }
   }
 

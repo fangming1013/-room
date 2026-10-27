@@ -1,41 +1,49 @@
-// 小程序虚拟支付（XPay / 米大师）—— iOS 也能合法卖虚拟商品的正规通道
+// 小程序虚拟支付（Midas / XPay）—— iOS 也能合法卖虚拟商品的正规通道
 // ---------------------------------------------------------------------
 // 为什么需要它：
-//   微信规则里，虚拟商品（会员、课程、AI 出图、素材下载…）只能用虚拟支付，
-//   用普通 wx.requestPayment 会被风控直接封支付能力（真机报「支付能力已被限制」）。
-//   开通虚拟支付后，安卓走微信支付、iOS 走 Apple IAP，同一套接口、同一个界面。
-//
-// 前置（老板在 mp 后台完成，缺一项这文件都是空转）：
-//   1. 服务类目含「工具」（我们是 工具→效率，已命中）
-//   2. 支付与交易 → 虚拟支付 → 开通并签约（1~7 个工作日）
-//   3. 基础配置里开「iOS 支付开关」，填小程序简称
-//   4. 道具管理建两个道具：render_5 / render_10，拿到 productId
-//   5. 消息推送填发货回调地址（本服务的 /api/vpay-notify）
+//   虚拟商品（会员、课程、AI 出图、素材下载…）只能用虚拟支付。
+//   用普通 wx.requestPayment 卖虚拟商品，真机会报「支付能力已被限制」。
+//   开通虚拟支付后，安卓走微信支付、iOS 走 Apple IAP，同一套接口、同一个收银台。
 //
 // 环境变量：
-//   VPAY_OFFER_ID     虚拟支付 OfferID（后台基础配置里）
+//   VPAY_OFFER_ID     虚拟支付 OfferID（默认已填，可用变量覆盖）
 //   VPAY_APP_KEY      现网 AppKey（保密，只放服务端）
 //   VPAY_SANDBOX_KEY  沙箱 AppKey（联调用）
 //   VPAY_ENV          0=现网 1=沙箱（默认 0）
+//   VPAY_PUSH_TOKEN   发货推送的 Token（后台消息推送里自己填的那个，可选）
 //   WX_APP_SECRET     已有，用于 code2Session 换 session_key
 //
-// ⚠️ 签名必须在服务端算：客户端拿不到 AppKey 和 session_key，也不该拿。
+// ⚠️ 三条铁律（血泪踩坑）：
+//   1. goodsPrice 是「道具单价」（分），buyQuantity 是「购买份数」。
+//      我们一个套餐＝一个道具 → buyQuantity 恒为 1。
+//      若把「套餐总价」当单价、又把「张数」当份数，客户会被扣 5 倍钱。
+//   2. signData 必须原样传给前端再原样传回，前端二次 JSON.stringify 会改字段顺序导致验签失败。
+//   3. 发货只认推送 + 订单存在性，绝不认前端 success。
 // ---------------------------------------------------------------------
 const crypto = require('crypto');
+
+// 道具表：productId → 张数 / 套餐价（分）
+// ⚠️ 价格与张数在这里定死，不接受客户端传入——否则客户端改个数字就能 1 分钱买 999 张。
+// 必须与 MP 后台「虚拟支付 → 道具管理」里创建的道具**一字不差、价格一致**。
+const PRODUCTS = {
+  render_5:  { count: 5,  price: 699, title: '5 张效果图' },
+  render_10: { count: 10, price: 990, title: '10 张效果图' }
+};
 
 function cfg() {
   return {
     appId: process.env.WX_APP_ID || 'wx89952f3a02cdc470',
     appSecret: process.env.WX_APP_SECRET || '',
-    offerId: String(process.env.VPAY_OFFER_ID || ''),
+    // OfferID 是公开信息（前端也要用），写死兜底，少一个要配错的变量
+    offerId: String(process.env.VPAY_OFFER_ID || '1450694692'),
     appKey: String(process.env.VPAY_APP_KEY || ''),
     sandboxKey: String(process.env.VPAY_SANDBOX_KEY || ''),
     env: Number(process.env.VPAY_ENV || 0) === 1 ? 1 : 0,
-    deliverUrl: String(process.env.VPAY_DELIVER_URL || '')
+    pushToken: String(process.env.VPAY_PUSH_TOKEN || '')
   };
 }
 
-// 三个参数齐了才算能收钱（AppSecret 是换 session_key 用的，旧代码可能已有）
+// 三个参数齐了才算能收钱
 function isConfigured() {
   const c = cfg();
   return !!(c.offerId && c.appKey && c.appSecret);
@@ -45,18 +53,19 @@ function status() {
   const c = cfg();
   return {
     configured: isConfigured(),
-    offerId: c.offerId ? c.offerId.slice(0, 4) + '****' : '',
+    offerId: c.offerId || '',
     appKeySet: !!c.appKey,
     appSecretSet: !!c.appSecret,
     env: c.env === 1 ? 'sandbox' : 'prod',
-    deliverUrlSet: !!c.deliverUrl
+    pushTokenSet: !!c.pushToken,
+    products: Object.keys(PRODUCTS)
   };
 }
 
 /**
  * code → { openid, session_key }
- * 虚拟支付的用户态签名 signature 必须用 session_key 算，所以这里比普通支付多要一个字段。
- * 注意：session_key 只在服务端流转，绝不返回小程序。
+ * 虚拟支付的用户态签名 signature 必须用 session_key 算，所以比普通支付多要一个字段。
+ * session_key 只在服务端流转，绝不返回小程序。
  */
 async function code2session(code) {
   const c = cfg();
@@ -72,87 +81,118 @@ async function code2session(code) {
 }
 
 function hmac(key, data) {
-  return crypto.createHmac('sha256', String(key)).update(String(data)).digest('hex');
+  return crypto.createHmac('sha256', String(key)).update(String(data), 'utf8').digest('hex');
 }
 
+function sha1(str) {
+  return crypto.createHash('sha1').update(String(str), 'utf8').digest('hex');
+}
+
+let seq = 0;
 function genOutTradeNo() {
-  // 米大师要求全局唯一；20 位足够，且便于肉眼区分是装修线的单
-  return 'VP' + Date.now().toString() + Math.floor(Math.random() * 900000 + 100000);
+  // 米大师要求：唯一、8~32 位、不能以下划线开头
+  seq = (seq + 1) % 1000;
+  return 'VP' + Date.now() + String(seq).padStart(3, '0') + String(Math.floor(Math.random() * 9000 + 1000));
 }
 
 /**
- * 下单：返回小程序端调 wx.requestVirtualPayment 所需的三要素
+ * 下单：返回 wx.requestVirtualPayment 所需三要素
  * @param {object} o
- * @param {string} o.code        wx.login 拿到的 code
- * @param {string} o.productId   后台道具管理里配的道具 ID，如 render_5
- * @param {number} o.price       单价（分），必须与后台道具配置一致，否则会被校验拒绝
- * @param {number} o.count       购买数量（张数）
- * @param {string} [o.outTradeNo]
+ * @param {string} o.code       wx.login 拿到的 code
+ * @param {string} o.productId  render_5 / render_10
+ * @param {string} [o.attach]
  */
 async function createOrder(o) {
   const c = cfg();
-  if (!isConfigured()) throw new Error('虚拟支付未配置（缺 VPAY_OFFER_ID / VPAY_APP_KEY / WX_APP_SECRET）');
-  const price = Math.round(Number(o.price) || 0);
-  const count = Math.max(1, Math.round(Number(o.count) || 1));
-  if (!(price > 0)) throw new Error('金额必须大于 0');
-  if (!o.productId) throw new Error('缺少 productId（后台道具管理里创建）');
+  if (!isConfigured()) throw new Error('虚拟支付未配置（缺 VPAY_APP_KEY / WX_APP_SECRET）');
+
+  const pid = String(o.productId || '');
+  const prod = PRODUCTS[pid];
+  if (!prod) throw new Error('未知道具：' + pid);
+  if (!o.code) throw new Error('缺少登录 code');
 
   const { openid, session_key } = await code2session(o.code);
-  const outTradeNo = o.outTradeNo || genOutTradeNo();
+  const outTradeNo = genOutTradeNo();
 
   const payload = {
     offerId: c.offerId,
-    buyQuantity: count,
+    buyQuantity: 1,            // 一个套餐＝一份道具，恒为 1（见文件头铁律 1）
     env: c.env,
     currencyType: 'CNY',
-    productId: String(o.productId),
-    goodsPrice: price,
+    productId: pid,
+    goodsPrice: prod.price,    // 套餐价，单位：分，必须与后台道具价格一致
     outTradeNo: outTradeNo,
-    attach: String(o.attach || '')
+    attach: String(o.attach || pid)
   };
   const signData = JSON.stringify(payload);
   const key = c.env === 1 ? (c.sandboxKey || c.appKey) : c.appKey;
 
   return {
     ok: true,
-    openid: openid,                 // 不返回给前端，仅内部发货用
+    openid: openid,              // 不下发前端，仅服务端记订单用
     outTradeNo: outTradeNo,
+    count: prod.count,           // 发货张数由服务端决定
+    price: prod.price,
     payParams: {
       signData: signData,
-      // 支付签名：证明这笔单是商户自己发起的
       paySig: hmac(key, 'requestVirtualPayment&' + signData),
-      // 用户态签名：绑当前用户，防止串号
       signature: hmac(session_key, signData),
-      // 道具直购模式（我们卖的是「5 张 / 10 张效果图」这种一次性道具，不是订阅）
-      mode: 'short_series_goods'
+      mode: 'short_series_goods',
+      // 官方接口只要求上面四个；多带 env/offerId 对部分基础库版本更稳
+      env: c.env,
+      offerId: c.offerId
     }
   };
 }
 
-/**
- * 发货回调验签（xpay_goods_deliver_notify）
- * ⚠️ 实装前必须做的三件事：
- *   1. 验签（用 AppKey 对微信推送的签名做 HMAC 比对）
- *   2. 幂等（同一 outTradeNo 只加一次额度，靠 store.setnx 锁）
- *   3. 兜底查单（success 回调会丢，微信侧也可能重推；两边都要能对齐）
- * 这里只做结构占位——没有真实 OfferID 时贸然开路由，等于给自己开一个加额度后门。
- */
-function verifyNotify(headers, rawBody) {
-  const c = cfg();
-  if (!c.appKey) return { ok: false, error: '未配置 AppKey，拒绝处理' };
-  const sig = String((headers && (headers['pay-sig'] || headers['Pay-Sig'])) || '');
-  if (!sig) return { ok: false, error: '缺少签名' };
-  const expect = hmac(c.appKey, rawBody);
-  if (sig.length !== expect.length) return { ok: false, error: '签名不匹配' };
-  // 定时安全比较，避免逐字节试探
-  const a = Buffer.from(sig);
-  const b = Buffer.from(expect);
-  if (!crypto.timingSafeEqual(a, b)) return { ok: false, error: '签名不匹配' };
-  try {
-    return { ok: true, data: JSON.parse(rawBody) };
-  } catch (e) {
-    return { ok: false, error: '报文不是合法 JSON' };
-  }
+// ===== 发货推送 =====
+// 推送可能是 XML（常见）也可能是 JSON。字段见官方：
+//   Event / OpenId / OutTradeNo / Env / WeChatPayInfo.MchOrderNo
+//   GoodsInfo.{ProductId, Quantity, ActualPrice}
+function pickXml(xml, tag) {
+  const m = xml.match(new RegExp('<' + tag + '>([\\s\\S]*?)</' + tag + '>', 'i'));
+  return m ? m[1].trim() : '';
 }
 
-module.exports = { isConfigured, status, createOrder, verifyNotify, code2session, cfg };
+function parseNotify(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  if (s.charAt(0) === '{') {
+    try { return JSON.parse(s); } catch (e) { return null; }
+  }
+  if (/^<xml/i.test(s) || s.indexOf('<xml') >= 0) {
+    return {
+      isXml: true,
+      Event: pickXml(s, 'Event'),
+      OpenId: pickXml(s, 'OpenId'),
+      OutTradeNo: pickXml(s, 'OutTradeNo'),
+      Env: Number(pickXml(s, 'Env') || 0),
+      MchOrderNo: pickXml(s, 'MchOrderNo'),
+      ProductId: pickXml(s, 'ProductId'),
+      Quantity: Number(pickXml(s, 'Quantity') || 0),
+      ActualPrice: Number(pickXml(s, 'ActualPrice') || 0),
+      Encrypt: pickXml(s, 'Encrypt')
+    };
+  }
+  return null;
+}
+
+// 消息推送 URL 校验：signature = sha1(sort(token, timestamp, nonce))
+function verifyUrlSign(query, token) {
+  if (!token) return true;   // 没配 Token 就跳过（下面还有订单存在性兜底）
+  const arr = [String(token), String((query && query.timestamp) || ''), String((query && query.nonce) || '')].sort();
+  const expect = sha1(arr.join(''));
+  return String((query && query.signature) || '') === expect;
+}
+
+// 应答：XML 请求回 XML 的 0，JSON 请求回 JSON；格式不对微信会重推最多 15 次
+function buildReply(isXml) {
+  return isXml
+    ? { type: 'text/xml; charset=utf-8', body: '<?xml version="1.0" encoding="UTF-8"?><xml><ErrCode>0</ErrCode><ErrMsg>success</ErrMsg></xml>' }
+    : { type: 'application/json; charset=utf-8', body: JSON.stringify({ ErrCode: 0, ErrMsg: 'success' }) };
+}
+
+module.exports = {
+  PRODUCTS, isConfigured, status, createOrder,
+  code2session, cfg, parseNotify, verifyUrlSign, buildReply
+};
