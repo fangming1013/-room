@@ -15,5 +15,5 @@ module.exports = {
   version: '1.2.0',
   date: '2026-10-27',
   uploaded: '',
-  note: '接入小程序虚拟支付（wx.requestVirtualPayment）：iOS 与安卓同一套收银台，价格/套餐/购买/余额两端完全一致。待开通拿到 OfferID/AppKey 后上传'
+  note: '接入小程序虚拟支付：iOS 与安卓同一套收银台，价格/套餐/购买/余额两端一致。OfferID 1450694692 已内置，配好 AppKey 与道具后真机验证即可上传'
 };
