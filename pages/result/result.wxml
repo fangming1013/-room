@@ -18,12 +18,12 @@
         </view>
         <view wx:if="{{!photoPath}}" class="sampleTip" bindtap="useSample">没有现场照片？<text class="sampleLink">用示例照片试试 ›</text></view>
 
-        <!-- 双端文案保持一致：都是「按需生成」这一个语义。
-             iOS 不多一句"不支持"，安卓也不多一句"必须买"——用户不应该感到自己用的是残次品。 -->
+        <!-- 双端共用同一套文案与购买入口：payReady 已包含端判断。
+             虚拟支付开通后，iPhone 也会正常显示价格、套餐、余额——两端界面完全一致。 -->
         <view class="payNote">
           <block wx:if="{{quotaInfo.totalLeft > 0}}">可用 <text class="num">{{quotaInfo.totalLeft}}</text> 张<text wx:if="{{quotaInfo.balance > 0}}">（套餐余额）</text></block>
-          <block wx:else>效果图按需生成<text wx:if="{{!isIOS && payReady}}"> · 6.99 元 / 5 张起</text></block>
-          <text wx:if="{{!isIOS && payReady}}" class="buyLink" bindtap="openPaySheet">{{quotaInfo.totalLeft > 0 ? '加购' : '看价格'}}</text>
+          <block wx:else>效果图按需生成<text wx:if="{{payReady}}"> · 6.99 元 / 5 张起</text></block>
+          <text wx:if="{{payReady}}" class="buyLink" bindtap="openPaySheet">{{quotaInfo.totalLeft > 0 ? '加购' : '看价格'}}</text>
         </view>
         <button class="btn renderBtn" loading="{{rendering}}" bindtap="genRender">{{renderUrl?'重新生成':(rendering?'生成中…':(genHint?genHint:(noQuota?(isIOS?'预约设计师出图':(payReady?'购买后生成':'预约效果图')):'开始生成')))}}</button>
       </block>
@@ -72,8 +72,8 @@
 
 <view wx:else class="wrap"><view class="head">暂无数据，请先录入空间</view></view>
 
-<!-- 效果图套餐面板（每日免费额度用完后弹出）· iOS 端整块不渲染（虚拟支付合规） -->
-<view wx:if="{{paySheet && !isIOS}}" class="payMask" catchtap="closePaySheet">
+<!-- 效果图套餐面板（额度用完弹出）· 虚拟支付开通后 iOS 同样展示 -->
+<view wx:if="{{paySheet && payReady}}" class="payMask" catchtap="closePaySheet">
   <view class="paySheet" catchtap="noopPay">
     <view class="psTitle">{{payReady ? '选择效果图套餐' : '效果图即将开放'}}</view>
     <view class="psSub">{{payReady ? '购买后即可生成，套餐余额长期有效。' : '支付通道正在开通中，现在还不能购买。选定套餐表示你的意向，开通后会在小程序内公告。'}}</view>

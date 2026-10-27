@@ -101,5 +101,26 @@ const be = fs.readFileSync(path.join(ROOT, 'backend/img-proxy.js'), 'utf8');
 check('后端 saveLead 落 wantRender', /wantRender: !!p\.wantRender/.test(be));
 check('后端预约强制推送', /force: !!p\.wantRender/.test(be));
 
+// —— 6. 虚拟支付开通后：iOS 也能正常买（两端逻辑合一） ——
+console.log('\n[6] 虚拟支付开通后');
+const iosPaid = makePage(true);
+iosPaid._vpayReady = true;
+iosPaid.data.paySheet = false;
+check('payOn() 变为 true', iosPaid.payOn() === true);
+iosPaid.openPaySheet();
+check('iOS 也打开套餐面板', iosPaid.data.paySheet === true);
+check('面板不再按端隐藏', wxml.indexOf('paySheet && payReady') > 0);
+
+// —— 7. 虚拟支付模块 ——
+console.log('\n[7] 虚拟支付模块');
+const vp = require(path.join(ROOT, 'utils/vpay.js'));
+check('套餐→道具映射齐全', vp.PRODUCT_ID.p5 === 'render_5' && vp.PRODUCT_ID.p10 === 'render_10');
+const vpSrc = fs.readFileSync(path.join(ROOT, 'utils/vpay.js'), 'utf8');
+check('调的是 requestVirtualPayment', vpSrc.indexOf('wx.requestVirtualPayment') > 0);
+check('包里不含任何密钥', !/AppKey\s*[:=]\s*['"][A-Za-z0-9]{8,}/.test(vpSrc));
+const vpayBe = fs.readFileSync(path.join(ROOT, 'backend/vpay.js'), 'utf8');
+check('签名在服务端算', vpayBe.indexOf("hmac(key, 'requestVirtualPayment&'") > 0);
+check('session_key 不下发', vpayBe.indexOf('session_key: session_key') < 0);
+
 console.log('\n==== ' + pass + ' passed, ' + fail + ' failed ====');
 process.exit(fail ? 1 : 0);
