@@ -109,6 +109,9 @@ const SPACES = {
         "name": "地柜长度",
         "unit": "M",
         "price": 1800,
+        "prices": {
+          "top": 2160
+        },
         "qty": 1,
         "on": true
       },
@@ -117,6 +120,9 @@ const SPACES = {
         "name": "吊柜长度",
         "unit": "M",
         "price": 880,
+        "prices": {
+          "top": 1056
+        },
         "qty": 1,
         "on": true
       },
@@ -125,6 +131,9 @@ const SPACES = {
         "name": "见光板",
         "unit": "块",
         "price": 300,
+        "prices": {
+          "top": 360
+        },
         "qty": 1,
         "on": true
       },
@@ -153,6 +162,9 @@ const SPACES = {
         "name": "抽屉",
         "unit": "个",
         "price": 200,
+        "prices": {
+          "top": 240
+        },
         "qty": 1,
         "on": true
       },
@@ -173,6 +185,9 @@ const SPACES = {
         "name": "热水器",
         "unit": "个",
         "price": 2600,
+        "prices": {
+          "top": 3120
+        },
         "qty": 1,
         "on": true
       },
@@ -209,6 +224,9 @@ const SPACES = {
         "name": "开关插座面板",
         "unit": "个",
         "price": 38,
+        "prices": {
+          "top": 46
+        },
         "qty": 1,
         "on": true
       },
@@ -253,6 +271,9 @@ const SPACES = {
         "name": "钛镁合金门套",
         "unit": "M",
         "price": 280,
+        "prices": {
+          "top": 336
+        },
         "qty": 1,
         "on": true
       },
@@ -261,6 +282,9 @@ const SPACES = {
         "name": "厨房双边木门套",
         "unit": "M",
         "price": 260,
+        "prices": {
+          "top": 312
+        },
         "qty": 1,
         "on": true
       }
@@ -391,6 +415,9 @@ const SPACES = {
         "name": "主材包",
         "unit": "套",
         "price": 5500,
+        "prices": {
+          "top": 6600
+        },
         "qty": 1,
         "on": true
       },
@@ -411,6 +438,9 @@ const SPACES = {
         "name": "成品卫浴柜（60-90cm）简约款",
         "unit": "套",
         "price": 1980,
+        "prices": {
+          "top": 2376
+        },
         "qty": 1,
         "on": true
       },
@@ -419,6 +449,9 @@ const SPACES = {
         "name": "淋浴区大理石台板",
         "unit": "块",
         "price": 1800,
+        "prices": {
+          "top": 2160
+        },
         "qty": 1,
         "on": true
       },
@@ -487,6 +520,9 @@ const SPACES = {
         "name": "铝扣板吊顶",
         "unit": "项",
         "price": 1280,
+        "prices": {
+          "top": 1536
+        },
         "qty": 1,
         "on": true
       },
@@ -503,6 +539,9 @@ const SPACES = {
         "name": "开关插座面板",
         "unit": "个",
         "price": 38,
+        "prices": {
+          "top": 46
+        },
         "qty": 1,
         "on": true
       },
@@ -535,6 +574,9 @@ const SPACES = {
         "name": "钛镁合金门套",
         "unit": "M",
         "price": 280,
+        "prices": {
+          "top": 336
+        },
         "qty": 1,
         "on": true
       }
@@ -684,6 +726,9 @@ const SPACES = {
         "name": "复合实木地板",
         "unit": "M²",
         "price": 238,
+        "prices": {
+          "top": 286
+        },
         "qty": 1,
         "on": false,
         "group": "floor_cover"
@@ -693,6 +738,9 @@ const SPACES = {
         "name": "实木踢脚线",
         "unit": "米",
         "price": 38,
+        "prices": {
+          "top": 46
+        },
         "qty": 1,
         "on": true
       },
@@ -701,6 +749,9 @@ const SPACES = {
         "name": "开关插座面板",
         "unit": "个",
         "price": 38,
+        "prices": {
+          "top": 46
+        },
         "qty": 1,
         "on": true
       },
@@ -721,6 +772,9 @@ const SPACES = {
         "name": "入户门门套",
         "unit": "米",
         "price": 158,
+        "prices": {
+          "top": 190
+        },
         "qty": 0,
         "on": true
       }
@@ -942,6 +996,9 @@ const SPACES = {
         "name": "复合实木地板",
         "unit": "M²",
         "price": 238,
+        "prices": {
+          "top": 286
+        },
         "qty": 1,
         "on": true,
         "group": "floor_cover"
@@ -951,6 +1008,9 @@ const SPACES = {
         "name": "石塑地板（6mm）",
         "unit": "M²",
         "price": 118,
+        "prices": {
+          "top": 142
+        },
         "qty": 1,
         "on": true
       },
@@ -959,6 +1019,9 @@ const SPACES = {
         "name": "实木踢脚线",
         "unit": "米",
         "price": 38,
+        "prices": {
+          "top": 46
+        },
         "qty": 1,
         "on": true
       },
@@ -967,6 +1030,9 @@ const SPACES = {
         "name": "开关插座面板",
         "unit": "个",
         "price": 38,
+        "prices": {
+          "top": 46
+        },
         "qty": 1,
         "on": true
       },
@@ -983,6 +1049,9 @@ const SPACES = {
         "name": "双边木门套",
         "unit": "米",
         "price": 260,
+        "prices": {
+          "top": 312
+        },
         "qty": 1,
         "on": true
       }
@@ -1177,6 +1246,9 @@ const SPACES = {
         "name": "复合实木地板",
         "unit": "M²",
         "price": 238,
+        "prices": {
+          "top": 286
+        },
         "qty": 1,
         "on": false,
         "group": "floor_cover"
@@ -1186,6 +1258,9 @@ const SPACES = {
         "name": "石塑地板（6mm）",
         "unit": "M²",
         "price": 118,
+        "prices": {
+          "top": 142
+        },
         "qty": 1,
         "on": false,
         "group": "floor_cover"
@@ -1195,6 +1270,9 @@ const SPACES = {
         "name": "实木踢脚线",
         "unit": "米",
         "price": 38,
+        "prices": {
+          "top": 46
+        },
         "qty": 1,
         "on": false,
         "group": "floor_cover"
@@ -1204,6 +1282,9 @@ const SPACES = {
         "name": "卧室主灯",
         "unit": "台",
         "price": 500,
+        "prices": {
+          "top": 600
+        },
         "qty": 1,
         "on": true
       },
@@ -1212,6 +1293,9 @@ const SPACES = {
         "name": "阳台灯",
         "unit": "台",
         "price": 200,
+        "prices": {
+          "top": 240
+        },
         "qty": 1,
         "on": true
       },
@@ -1220,6 +1304,9 @@ const SPACES = {
         "name": "过门石",
         "unit": "块",
         "price": 80,
+        "prices": {
+          "top": 96
+        },
         "qty": 1,
         "on": true
       },
@@ -1228,6 +1315,9 @@ const SPACES = {
         "name": "地漏",
         "unit": "个",
         "price": 60,
+        "prices": {
+          "top": 72
+        },
         "qty": 1,
         "on": true
       },
@@ -1236,6 +1326,9 @@ const SPACES = {
         "name": "开关插座面板",
         "unit": "个",
         "price": 38,
+        "prices": {
+          "top": 46
+        },
         "qty": 1,
         "on": true
       },
@@ -1244,6 +1337,9 @@ const SPACES = {
         "name": "双边木门套",
         "unit": "米",
         "price": 260,
+        "prices": {
+          "top": 312
+        },
         "qty": 1,
         "on": true
       },
@@ -1252,6 +1348,9 @@ const SPACES = {
         "name": "单边木门套",
         "unit": "米",
         "price": 158,
+        "prices": {
+          "top": 190
+        },
         "qty": 1,
         "on": true
       }
@@ -1445,6 +1544,9 @@ const SPACES = {
         "name": "复合实木地板",
         "unit": "M²",
         "price": 238,
+        "prices": {
+          "top": 286
+        },
         "qty": 1,
         "on": true,
         "group": "floor_cover"
@@ -1454,6 +1556,9 @@ const SPACES = {
         "name": "石塑地板（6mm）",
         "unit": "M²",
         "price": 118,
+        "prices": {
+          "top": 142
+        },
         "qty": 1,
         "on": true
       },
@@ -1462,6 +1567,9 @@ const SPACES = {
         "name": "实木踢脚线",
         "unit": "米",
         "price": 38,
+        "prices": {
+          "top": 46
+        },
         "qty": 1,
         "on": true
       },
@@ -1470,6 +1578,9 @@ const SPACES = {
         "name": "开关插座面板",
         "unit": "个",
         "price": 38,
+        "prices": {
+          "top": 46
+        },
         "qty": 1,
         "on": true
       },
@@ -1486,6 +1597,9 @@ const SPACES = {
         "name": "双边木门套",
         "unit": "米",
         "price": 260,
+        "prices": {
+          "top": 312
+        },
         "qty": 1,
         "on": true
       }
