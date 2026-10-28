@@ -93,18 +93,28 @@ Page({
   },
 
   onLoad(options) {
-    // iOS 端合规硬约束（微信《平台运营规范》虚拟支付）：iOS 上不得出现任何
-    // 购买路径、价格展示、已购余额展示，也不能引导去 App/公众号/安卓支付。
-    // 违反的后果不是拒审这么简单——已上线的小程序会被暂停 iOS 端访问。
-    // 所以 iOS 端：算价/留资/看示例图全保留，只把「买图」这一块整块摘掉。
+    // 历史包袱说明：v1.1.3~v1.1.5 因为误判"iOS 不能卖虚拟商品"，这里把 iOS 的买图整块摘掉了。
+    // 现在接了虚拟支付（wx.requestVirtualPayment，iOS 走 Apple IAP 是合规的），
+    // 只要服务端 configured，两端一律显示价格与购买入口。
     let isIOS = false;
     try {
       const d = (wx.getDeviceInfo ? wx.getDeviceInfo() : wx.getSystemInfoSync()) || {};
       isIOS = String(d.platform || '').toLowerCase() === 'ios';
     } catch (e) {}
     this._isIOS = isIOS;
-    // 虚拟支付若已开通，iOS 端就能正常卖（价格/购买/余额全部放开），
-    // 不再是"能看不能买"——两端界面才真正一致。查一次服务端状态，缓存 10 分钟。
+
+    // 首屏必须立刻决定是"显示价格"还是"显示预约"。
+    // 先用上次的查询结果（本地缓存），没缓存就按已开通乐观处理——
+    // 否则从进页面到 checkReady 返回这 0.2~2 秒里，iPhone 会先看到"预约效果图"，
+    // 再跳成"购买后生成"，闪一下像故障。真没开通时 checkReady 会很快纠正回来。
+    let cachedReady = true;
+    try {
+      const c = wx.getStorageSync('vpay_ready_v1');
+      if (c && typeof c.ok === 'boolean') cachedReady = c.ok;
+    } catch (e) {}
+    this._vpayReady = cachedReady;
+    this.setData({ vpayReady: cachedReady, payReady: this.payOn() });
+
     vp.checkReady().then(ok => {
       this._vpayReady = ok;
       this.setData({ vpayReady: ok, payEnabled: this.payOn(), payReady: this.payOn() });
@@ -114,7 +124,7 @@ Page({
     this.setData({
       isIOS: isIOS,
       hasApi: !!(apiCfg && apiCfg.apiKey) || !!sf.PROXY_BASE,
-      payEnabled: !isIOS && sf.payEnabled()
+      payEnabled: this.payOn()
     });
     let space;
     if (options && options.rec) {

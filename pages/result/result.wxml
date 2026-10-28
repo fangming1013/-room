@@ -25,7 +25,7 @@
           <block wx:else>效果图按需生成<text wx:if="{{payReady}}"> · 6.99 元 / 5 张起</text></block>
           <text wx:if="{{payReady}}" class="buyLink" bindtap="openPaySheet">{{quotaInfo.totalLeft > 0 ? '加购' : '看价格'}}</text>
         </view>
-        <button class="btn renderBtn" loading="{{rendering}}" bindtap="genRender">{{renderUrl?'重新生成':(rendering?'生成中…':(genHint?genHint:(noQuota?(isIOS?'预约设计师出图':(payReady?'购买后生成':'预约效果图')):'开始生成')))}}</button>
+        <button class="btn renderBtn" loading="{{rendering}}" bindtap="genRender">{{renderUrl?'重新生成':(rendering?'生成中…':(genHint?genHint:(noQuota?(payReady?'购买后生成':'预约效果图'):'开始生成')))}}</button>
       </block>
 
       <view class="renderBox">
@@ -50,7 +50,7 @@
         <text class="albumTip">共 {{renders.length}} 张 · 点缩略图切换主图</text>
       </view>
     </block>
-    <view wx:else class="hint soon">✨ AI 效果图功能即将上线，敬请期待（需配置生图服务）</view>
+    <view wx:else class="hint soon">效果图服务暂时不可用，请稍后重试</view>
   </view>
 
   <button class="shareBtn" open-type="share">分享给好友 / 朋友圈</button>

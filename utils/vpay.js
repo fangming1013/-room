@@ -171,7 +171,13 @@ function checkReady(force) {
         try { wx.setStorageSync(READY_KEY, { ok: ok, at: Date.now() }); } catch (e) {}
         resolve(ok);
       },
-      fail: () => resolve(false)
+      fail: () => {
+        // 网络抖动 ≠ 没开通。沿用上次结果，避免把已经能卖的 iOS 端误降级成"预约"
+        try {
+          const c = wx.getStorageSync(READY_KEY);
+          resolve(c && typeof c.ok === 'boolean' ? !!c.ok : false);
+        } catch (e) { resolve(false); }
+      }
     });
   });
 }
