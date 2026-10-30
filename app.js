@@ -6,6 +6,10 @@ App({
     project: { customer: '', spaces: [] }  // 多空间项目：每个空间独立图纸+预算，含总预算
   },
   onLaunch() {
+    // 静默更新检查：发版后用户下次冷启动自动拿到新包。
+    // 之前没有这段，iPhone 可能长期跑旧包（旧版 iOS 付费入口逻辑完全不同），
+    // 表现为"安卓能看到购买、iOS 看不到"，而且怎么重试都一样。
+    this.initUpdate();
     // 隐私授权（微信要求：调用隐私接口前需用户同意）
     this.initPrivacy();
     // 加载本地保存的计算规则覆写（后台/管理页修改后持久化）
@@ -22,6 +26,24 @@ App({
     // 静默登录取 openid：效果图额度、订单都挂在 openid 上
     // 失败不弹窗（老版本后端或断网时退回本地模式，不影响算价）
     try { require('./utils/wxauth.js').login(); } catch (e) {}
+  },
+
+  // 新版本检测：微信下载完新包后提示重启，避免用户长期停留在旧代码
+  initUpdate() {
+    try {
+      if (!wx.getUpdateManager) return;
+      const um = wx.getUpdateManager();
+      um.onUpdateReady(() => {
+        wx.showModal({
+          title: '发现新版本',
+          content: '新版本已下载完成，重启后生效。',
+          confirmText: '立即重启',
+          cancelText: '稍后',
+          success: r => { if (r.confirm) um.applyUpdate(); }
+        });
+      });
+      um.onUpdateFailed(() => { /* 下载失败就下次冷启动再试，不打扰用户 */ });
+    } catch (e) {}
   },
 
   // 从本地存档恢复最近一次编辑的项目（含各空间快照与效果图路径）

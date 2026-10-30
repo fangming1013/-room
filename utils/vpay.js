@@ -152,6 +152,21 @@ function available() {
 const READY_KEY = 'vpay_ready_v1';
 const READY_TTL = 10 * 60 * 1000;
 
+// 上次已知结论；没有记录时按「可用」处理。
+// ⚠️ 这里必须是乐观默认，不能默认 false：
+//    iOS 的购买入口完全由这个返回值控制（安卓还有 PAY_ENABLED 本地常量兜底，
+//    所以安卓从来不会因为网络问题丢入口）。一旦把「查不到」当成「没开通」，
+//    Render 免费层冷启动（30~60 秒）或一次网络抖动，就会让 iPhone 上
+//    整个购买入口消失，用户点「看价格」直接被送去预约设计师。
+//    真没开通也不会亏：点下去下单会返回 501，由 _fallbackBuy 兜住。
+function lastKnown() {
+  try {
+    const c = wx.getStorageSync(READY_KEY);
+    if (c && typeof c.ok === 'boolean') return !!c.ok;
+  } catch (e) { /* ignore */ }
+  return true;
+}
+
 function checkReady(force) {
   return new Promise(resolve => {
     try {
@@ -164,20 +179,20 @@ function checkReady(force) {
     wx.request({
       url: PROXY_BASE + '/api/health',
       method: 'GET',
-      timeout: 8000,
+      timeout: 15000,   // 原来 8s：Render 冷启动唤醒要 30~60s，8s 必然超时
       success: r => {
-        const d = (r.data && r.data.vpay) || {};
+        const d = (r.data && r.data.vpay) || null;
+        // 只认服务端明确给出的布尔值。502/HTML/字段缺失一律算「未知」，沿用上次结论，
+        // 绝不把「响应不对」当成「没开通」写进缓存。
+        if (r.statusCode !== 200 || !d || typeof d.configured !== 'boolean') {
+          resolve(lastKnown());
+          return;
+        }
         const ok = !!d.configured;
         try { wx.setStorageSync(READY_KEY, { ok: ok, at: Date.now() }); } catch (e) {}
         resolve(ok);
       },
-      fail: () => {
-        // 网络抖动 ≠ 没开通。沿用上次结果，避免把已经能卖的 iOS 端误降级成"预约"
-        try {
-          const c = wx.getStorageSync(READY_KEY);
-          resolve(c && typeof c.ok === 'boolean' ? !!c.ok : false);
-        } catch (e) { resolve(false); }
-      }
+      fail: () => resolve(lastKnown())
     });
   });
 }

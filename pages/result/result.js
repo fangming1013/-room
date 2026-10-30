@@ -106,10 +106,11 @@ Page({
     // 先用上次的查询结果（本地缓存），没缓存就按已开通乐观处理——
     // 否则从进页面到 checkReady 返回这 0.2~2 秒里，iPhone 会先看到"预约效果图"，
     // 再跳成"购买后生成"，闪一下像故障。真没开通时 checkReady 会很快纠正回来。
+    // ⚠️ 只采信 10 分钟内的结论：过期的 false 会把 iOS 入口永久锁死（旧缓存污染）。
     let cachedReady = true;
     try {
       const c = wx.getStorageSync('vpay_ready_v1');
-      if (c && typeof c.ok === 'boolean') cachedReady = c.ok;
+      if (c && typeof c.ok === 'boolean' && c.at && (Date.now() - c.at) < 10 * 60 * 1000) cachedReady = c.ok;
     } catch (e) {}
     this._vpayReady = cachedReady;
     this.setData({ vpayReady: cachedReady, payReady: this.payOn() });
