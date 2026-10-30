@@ -22,7 +22,7 @@
              虚拟支付开通后，iPhone 也会正常显示价格、套餐、余额——两端界面完全一致。 -->
         <view class="payNote">
           <block wx:if="{{quotaInfo.totalLeft > 0}}">可用 <text class="num">{{quotaInfo.totalLeft}}</text> 张<text wx:if="{{quotaInfo.balance > 0}}">（套餐余额）</text></block>
-          <block wx:else>效果图按需生成<text wx:if="{{payReady}}"> · 6.99 元 / 5 张起</text></block>
+          <block wx:else>可用 <text class="num">0</text> 张<text wx:if="{{payReady}}"> · 6.99 元 / 5 张起</text></block>
           <text wx:if="{{payReady}}" class="buyLink" bindtap="openPaySheet">{{quotaInfo.totalLeft > 0 ? '加购' : '看价格'}}</text>
         </view>
         <button class="btn renderBtn" loading="{{rendering}}" bindtap="genRender">{{renderUrl?'重新生成':(rendering?'生成中…':(genHint?genHint:(noQuota?(payReady?'购买后生成':'预约效果图'):'开始生成')))}}</button>
