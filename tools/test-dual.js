@@ -60,7 +60,9 @@ check('result.wxml 无「暂不支持」', wxml.indexOf('暂不支持') < 0);
 check('result.wxml 无「暂无可用额度」', wxml.indexOf('暂无可用额度') < 0);
 check('result.wxml 无「iPhone 暂不」', wxml.indexOf('iPhone 暂不') < 0);
 check('supplier.js 无「暂不支持在线缴费」', sup.indexOf('暂不支持在线缴费') < 0);
-check('两端共用同一句「效果图按需生成」', wxml.indexOf('效果图按需生成') > 0);
+check('两端共用同一句额度文案，且 0 张时也显示张数',
+  wxml.indexOf('可用 <text class="num">{{quotaInfo.totalLeft}}</text> 张') > 0 &&
+  wxml.indexOf('可用 <text class="num">0</text> 张') > 0);
 
 // —— 2. iOS 无额度：点生成 → 预约出图（不是"不支持"） ——
 console.log('\n[2] iOS 无额度路径');
