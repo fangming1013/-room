@@ -102,10 +102,18 @@ Page({
         if (res.ok && res.phone) {
           this._commit(res.phone);
         } else {
-          this.setData({ loading: false, manual: true, err: (res.error || '手机号授权失败') + '，请手动填写' });
+          // 技术细节只进控制台：消费者屏幕上不能出现 WX_APP_SECRET 这类词，太不正式
+          console.warn('[register] 手机号授权失败', res.code || '', res.error || '');
+          const friendly = res.code === 'NO_APP_SECRET'
+            ? '微信授权暂不可用，请手动填写手机号'
+            : '手机号授权失败，请手动填写';
+          this.setData({ loading: false, manual: true, err: friendly });
         }
       },
-      fail: () => this.setData({ loading: false, manual: true, err: '网络异常，请手动填写手机号' })
+      fail: e => {
+        console.warn('[register] 换取手机号网络失败', e && e.errMsg);
+        this.setData({ loading: false, manual: true, err: '网络异常，请手动填写手机号' });
+      }
     });
   },
 

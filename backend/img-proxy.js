@@ -26,6 +26,13 @@ const notify = require('./notify.js');
 const PORT = process.env.PORT || 3000;
 const STARTED_AT = new Date().toISOString();
 const KEY = process.env.SILICONFLOW_API_KEY || '';
+
+// ===== 小程序身份（换取手机号 / access_token 用）=====
+// AppID 不是机密（客户端代码、公开渠道都有），必须硬兜底：
+// Render 若没配这个环境变量，regist 页的「微信一键授权」会整块失效。
+// 只有 AppSecret 是真机密，必须走环境变量，绝不写进代码。
+const WX_APP_ID = process.env.WX_APP_ID || 'wx89952f3a02cdc470';
+const WX_APP_SECRET = process.env.WX_APP_SECRET || '';
 const API = 'https://api.siliconflow.cn/v1/images/generations';
 const DEFAULT_MODEL = 'Kwai-Kolors/Kolors';
 
@@ -155,6 +162,14 @@ const server = http.createServer(async (req, res) => {
     wxpay: wxpay.status(),
     // feats.startedAt = 进程启动时间，用来判断 Render 是否已按新代码重启
     feats: { leadPush: notify.enabled, startedAt: STARTED_AT },
+    // 换手机号能力是否就绪：appSecretSet=false 时注册页只能手动填手机号
+    wxAuth: {
+      appId: WX_APP_ID,
+      appIdSet: !!process.env.WX_APP_ID,
+      appSecretSet: !!WX_APP_SECRET,
+      tokenApi: 'stable_token',
+      phoneApi: 'getuserphonenumber'
+    },
     // 虚拟支付是否就绪：小程序端据此决定 iOS 端要不要放开价格与购买入口
     vpay: vpay.status()
   });
@@ -269,8 +284,9 @@ const server = http.createServer(async (req, res) => {
     try { p = JSON.parse(buf || '{}'); } catch (e) { return send(res, 400, { ok: false, error: 'JSON 解析失败' }); }
 
     if (p.phoneCode) {
-      if (!process.env.WX_APP_ID || !process.env.WX_APP_SECRET) {
-        return send(res, 500, { ok: false, error: '后端未配置 WX_APP_ID / WX_APP_SECRET，无法换取手机号' });
+      // AppID 有硬编码兜底，这里只需卡 AppSecret；报错要指名道姓，别让线上排查靠猜
+      if (!WX_APP_SECRET) {
+        return send(res, 500, { ok: false, code: 'NO_APP_SECRET', error: '后端缺 WX_APP_SECRET 环境变量，无法换取手机号' });
       }
       try {
         const info = await getPhoneByCode(p.phoneCode);
@@ -588,10 +604,43 @@ let _tkCache = { token: '', exp: 0 };
 async function getAccessToken() {
   const now = Date.now();
   if (_tkCache.token && now < _tkCache.exp) return _tkCache.token;
-  const url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=' + process.env.WX_APP_ID + '&secret=' + process.env.WX_APP_SECRET;
-  const r = await fetch(url);
-  const j = await r.json().catch(() => ({}));
-  if (!j.access_token) throw new Error('获取 access_token 失败：' + (j.errmsg || JSON.stringify(j)));
+  if (!WX_APP_SECRET) throw new Error('后端缺 WX_APP_SECRET 环境变量');
+
+  // 用 stable_token 而不是 cgi-bin/token：
+  // cgi-bin/token 要求配 IP 白名单，Render 免费层出口 IP 不固定，配了也会 40164 invalid ip；
+  // stable_token 走 POST、不受 IP 白名单限制，且返回的是稳定版 token，不会把其他服务踢下线。
+  let j = {};
+  try {
+    const r = await fetch('https://api.weixin.qq.com/cgi-bin/stable_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'client_credential',
+        appid: WX_APP_ID,
+        secret: WX_APP_SECRET,
+        force_refresh: false
+      })
+    });
+    j = await r.json().catch(() => ({}));
+  } catch (e) {
+    throw new Error('请求 access_token 网络失败：' + (e && e.message || e));
+  }
+
+  // 极少数情况（如账号风控要求强刷）退回经典接口再试一次
+  if (!j.access_token) {
+    try {
+      const r2 = await fetch('https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=' + WX_APP_ID + '&secret=' + WX_APP_SECRET);
+      j = await r2.json().catch(() => ({}));
+    } catch (e) { /* 保留第一次的错误 */ }
+  }
+
+  if (!j.access_token) {
+    const tip = j.errcode === 40125 ? 'AppSecret 不正确，请到小程序后台重置后更新 Render 环境变量'
+      : j.errcode === 40164 ? 'IP 不在白名单（stable_token 不应出现此错，请检查账号状态）'
+      : j.errcode === 40013 ? 'AppID 不合法'
+      : (j.errmsg || JSON.stringify(j));
+    throw new Error('获取 access_token 失败：' + tip);
+  }
   _tkCache = { token: j.access_token, exp: now + Math.max(60, (j.expires_in || 7200) - 300) * 1000 };
   return j.access_token;
 }
