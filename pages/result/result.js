@@ -417,7 +417,14 @@ Page({
       if (c === 'CANCEL') return;
       if (c === 'NET') { wx.showToast({ title: '网络不稳，请再试一次', icon: 'none' }); return; }
       if (c === 'VPAY_NOT_READY' || c === 'UNSUPPORTED') { this._fallbackBuy(pack); return; }
-      wx.showToast({ title: (err && err.message) || '支付失败', icon: 'none' });
+      // 支付失败原因常常很长（含微信原始 errMsg，如 INVALID_PLATFORM），
+      // Toast 两行就截断，等于什么都没说 → 长文本改用弹窗，客户能完整看到并反馈
+      const m = (err && err.message) || '支付失败';
+      if (m.length > 14) {
+        wx.showModal({ title: '支付未完成', content: m, showCancel: false, confirmText: '知道了' });
+      } else {
+        wx.showToast({ title: m, icon: 'none' });
+      }
     });
   },
 

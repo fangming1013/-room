@@ -44,6 +44,21 @@ function login() {
   });
 }
 
+// 当前跑的是哪个版本：develop 开发版 / trial 体验版 / release 正式版
+function envVersion() {
+  try {
+    const ai = wx.getAccountInfoSync ? wx.getAccountInfoSync() : null;
+    return (ai && ai.miniProgram && ai.miniProgram.envVersion) || 'release';
+  } catch (e) { return 'release'; }
+}
+
+function isIOS() {
+  try {
+    const d = (wx.getDeviceInfo ? wx.getDeviceInfo() : wx.getSystemInfoSync()) || {};
+    return String(d.platform || '').toLowerCase() === 'ios';
+  } catch (e) { return false; }
+}
+
 function post(path, data) {
   return new Promise((resolve, reject) => {
     wx.request({
@@ -114,24 +129,42 @@ async function buy(packId) {
       reject(e);
       return;
     }
+    // ⚠️ 只传官方文档列出的 4 个参数：signData / paySig / signature / mode。
+    // env、offerId 已经在 signData 里了，绝不能再作为外层字段传——
+    // 安卓对多余字段宽容，iOS 会严格校验并直接返回 -15001（INVALID_PLATFORM），
+    // 表现就是"安卓能付、iOS 进不去"。
     wx.requestVirtualPayment({
       signData: d.payParams.signData,
       paySig: d.payParams.paySig,
       signature: d.payParams.signature,
       mode: d.payParams.mode || 'short_series_goods',
-      env: d.payParams.env,
-      offerId: d.payParams.offerId,
       success: () => resolve(),
       fail: e => {
         const msg = (e && (e.errMsg || e.errmsg)) || '';
         const no = e && (e.errno || e.errCode);
+        // -15001 是个"筐"，真实原因在 errMsg 里（INVALID_PLATFORM / 各种子原因）。
+        // 只映射成中文会把原始信息吃掉，排查时只能瞎猜——所以两个都留着。
+        const raw = String(msg).replace(/^requestVirtualPayment:fail\s*/i, '').trim();
         const hint = no != null ? (ERR_HINT[String(no)] || '') : '';
-        const err = new Error(
-          /cancel/i.test(msg) ? '已取消支付'
-            : (hint || msg || '支付未完成') + (no != null ? '（' + no + '）' : '')
-        );
+        // -15001 下最常见的子原因是 INVALID_PLATFORM（当前环境不支持 iOS 虚拟支付）。
+        // 这种情况光说"参数不合法"会把人带偏到签名上去，所以单独给出可执行的指引。
+        let body;
+        if (/cancel/i.test(msg)) {
+          body = '已取消支付';
+        } else if (no === -15001 && /INVALID_PLATFORM/i.test(raw) && isIOS() && envVersion() !== 'release') {
+          body = 'iOS 虚拟支付只支持正式版，当前是'
+            + (envVersion() === 'develop' ? '开发版' : '体验版')
+            + '。请用微信搜索小程序名称，从正式版进入后再购买';
+        } else if (no === -15001 && /INVALID_PLATFORM/i.test(raw)) {
+          body = '当前环境不支持 iOS 虚拟支付（INVALID_PLATFORM）。请确认微信版本 8.0.68 以上、iPhone 系统 iOS 15 以上，且从正式版小程序进入';
+        } else {
+          body = hint ? (raw && raw !== hint ? hint + '：' + raw : hint) : (raw || '支付未完成');
+        }
+        const err = new Error(body + (no != null ? '（' + no + '）' : ''));
         err.code = /cancel/i.test(msg) ? 'CANCEL' : 'FAIL';
         err.errno = no;
+        err.rawMsg = raw;
+        console.warn('[vpay] requestVirtualPayment 失败', { errno: no, errMsg: msg });
         reject(err);
       }
     });

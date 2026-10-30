@@ -138,7 +138,9 @@ async function createOrder(o) {
       paySig: hmac(key, 'requestVirtualPayment&' + signData),
       signature: hmac(session_key, signData),
       mode: 'short_series_goods',
-      // 官方接口只要求上面四个；多带 env/offerId 对部分基础库版本更稳
+      // env / offerId 只是给前端参考，**不要**再塞进 wx.requestVirtualPayment 的入参：
+      // 官方接口只接受 signData/paySig/signature/mode 四个，iOS 对多余字段会直接判
+      // -15001（INVALID_PLATFORM），安卓却宽容忽略 —— 这就是两端表现不一致的来源。
       env: c.env,
       offerId: c.offerId
     }
