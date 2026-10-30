@@ -79,6 +79,9 @@
   <view style="height:24rpx;"></view>
   <view class="nextHint">录入完成 → 点下方「生成预算」，自动进入报价页（含主材/施工明细与总预算）</view>
 
+  <!-- 版本号：让用户/自己一眼确认手机跑的是哪一版，避免"改了却没生效"的误判 -->
+  <view class="verFoot">v{{verText}}</view>
+
   <view style="height:160rpx;"></view>
 
   <!-- 底部 -->

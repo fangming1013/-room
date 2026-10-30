@@ -12,8 +12,8 @@
 
 module.exports = {
   name: 'room-mini',
-  version: '1.2.0',
-  date: '2026-10-27',
+  version: '1.2.1',
+  date: '2026-10-30',
   uploaded: '',
-  note: '接入小程序虚拟支付：iOS 与安卓同一套收银台，价格/套餐/购买/余额两端一致。OfferID 1450694692 已内置，配好 AppKey 与道具后真机验证即可上传'
+  note: '修 iOS 支付：requestVirtualPayment 只传官方 4 个参数（原多传 env/offerId，iOS 严格校验报 -15001）；iOS 购买入口不再被一次网络失败永久锁死；新增发版后可重启生效'
 };

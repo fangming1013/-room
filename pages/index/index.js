@@ -10,6 +10,7 @@ const speech = require('../../utils/speech.js');
 const plan = require('../../utils/plan.js');
 const { round1, fmt1 } = require('../../utils/num.js');
 const est = require('../../utils/estimate.js');
+const VER = require('../../version.js');
 const auxRule = require('../../utils/auxrule.js');   // 辅助项工程量规则（按项目空间数分流）
 
 const names = {};
@@ -59,6 +60,7 @@ function syncQtyText(s) {
 
 Page({
   data: {
+    verText: VER.version + ' · ' + VER.date,
     spaceKeys: SPACE_KEYS,
     names,
     walls: WALLS,
