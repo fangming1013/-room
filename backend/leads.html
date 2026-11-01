@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>客资台 · 装修算算价</title>
+<style>
+  :root{
+    --g:#10B981; --g2:#059669; --o:#F97316;
+    --ink:#1f2937; --sub:#6b7280; --line:#e5e7eb; --bg:#f6f8f9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Microsoft YaHei","PingFang SC",sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 18px 60px}
+  header{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  h1{font-size:22px;margin:0;letter-spacing:.5px}
+  .badge{background:#ecfdf5;color:var(--g2);border:1px solid #a7f3d0;
+         border-radius:999px;padding:2px 10px;font-size:12px}
+  .sub{color:var(--sub);font-size:13px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;
+        padding:14px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .cfg{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  input,button{font:inherit}
+  input[type=text],input[type=password]{border:1px solid var(--line);border-radius:10px;
+        padding:9px 12px;outline:none;background:#fff;color:var(--ink)}
+  input[type=text]:focus,input[type=password]:focus{border-color:var(--g)}
+  #api{flex:1 1 260px;min-width:220px}
+  #key{flex:0 0 190px}
+  button{border:0;border-radius:10px;padding:9px 16px;cursor:pointer;
+         background:var(--g);color:#fff;font-weight:600}
+  button:hover{background:var(--g2)}
+  button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500}
+  button.ghost:hover{background:#f9fafb}
+  .stat{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  .stat .card{padding:12px 14px}
+  .stat b{display:block;font-size:24px;line-height:1.2;color:var(--g2)}
+  .stat span{font-size:12px;color:var(--sub)}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  #q{flex:1 1 200px}
+  #msg{font-size:13px;color:var(--sub);min-height:20px;margin:2px 0 10px}
+  #msg.err{color:#dc2626}
+  .lead{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;
+        margin-bottom:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);position:relative}
+  .lead.done{opacity:.55}
+  .row1{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .who{font-size:16px;font-weight:700}
+  .tel{font-size:18px;font-weight:700;color:var(--g2);letter-spacing:.5px;text-decoration:none}
+  .t{font-size:12px;color:var(--sub);margin-left:auto}
+  .meta{color:var(--sub);font-size:13px;margin-top:6px}
+  .money{color:var(--o);font-weight:700}
+  .tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+  .tag{font-size:12px;padding:2px 9px;border-radius:999px;background:#f3f4f6;color:#374151}
+  .tag.hot{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+  .tag.new{background:#ecfdf5;color:var(--g2);border:1px solid #a7f3d0}
+  .acts{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+  .acts button,.acts a{font-size:13px;padding:6px 12px;border-radius:9px}
+  .acts a{display:inline-block;background:#ecfdf5;color:var(--g2);text-decoration:none;
+          border:1px solid #a7f3d0;font-weight:600}
+  .empty{text-align:center;color:var(--sub);padding:46px 10px}
+  .hint{font-size:12px;color:var(--sub);margin-top:10px;line-height:1.8}
+  .hint code{background:#f3f4f6;padding:1px 6px;border-radius:6px;font-size:12px}
+  @media(max-width:640px){
+    .stat{grid-template-columns:repeat(2,1fr)}
+    #key{flex:1 1 140px}
+    h1{font-size:19px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>客资台</h1>
+    <span class="badge">装修算算价</span>
+    <span class="sub">客户在小程序注册留的手机号，全在这里</span>
+  </header>
+
+  <div class="cfg">
+    <input id="api" type="text" placeholder="服务地址" value="https://room-rchx.onrender.com">
+    <input id="key" type="password" placeholder="云端口令（ADMIN_KEY）">
+    <button id="go">拉取客资</button>
+    <button class="ghost" id="save">记住</button>
+  </div>
+  <div id="msg"></div>
+
+  <div class="stat">
+    <div class="card"><b id="s1">—</b><span>累计客资</span></div>
+    <div class="card"><b id="s2">—</b><span>今日新增</span></div>
+    <div class="card"><b id="s3">—</b><span>近 7 天</span></div>
+    <div class="card"><b id="s4">—</b><span>预约出图</span></div>
+  </div>
+
+  <div class="bar">
+    <input id="q" type="text" placeholder="搜手机号 / 城市 / 称呼">
+    <button class="ghost" id="csv">导出 Excel(CSV)</button>
+    <button class="ghost" id="del">清空本机标记</button>
+  </div>
+
+  <div id="list"><div class="empty">填好口令，点「拉取客资」</div></div>
+
+  <div class="hint">
+    云端口令 = Render 环境变量 <code>ADMIN_KEY</code> 的值，填一次点「记住」，以后打开自动带出。<br>
+    客户每次留资服务端都会推一条微信通知；这里看到的是全量历史，换手机也不会丢。
+  </div>
+</div>
+
+<script>
+var KEY_API = 'lead_console_cfg_v1';
+var KEY_MARK = 'lead_console_mark_v1';
+var rows = [];
+var mark = {};
+
+function $(id){ return document.getElementById(id); }
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function loadCfg(){
+  // 支持用链接直接带口令打开：?key=xxx&api=xxx（方便一键查看，不用每次手填）
+  try{
+    var qs = new URLSearchParams(location.search);
+    var qk = (qs.get('key') || '').trim();
+    var qa = (qs.get('api') || '').trim();
+    if (qk || qa){
+      var cur = {};
+      try{ cur = JSON.parse(localStorage.getItem(KEY_API) || '{}') || {}; }catch(e){}
+      if (qk) cur.key = qk;
+      if (qa) cur.api = qa;
+      localStorage.setItem(KEY_API, JSON.stringify(cur));
+      if (history.replaceState) history.replaceState(null, '', location.pathname);
+    }
+  }catch(e){}
+  try{
+    var c = JSON.parse(localStorage.getItem(KEY_API) || '{}');
+    if (c.api) $('api').value = c.api;
+    if (c.key) $('key').value = c.key;
+  }catch(e){}
+  try{ mark = JSON.parse(localStorage.getItem(KEY_MARK) || '{}') || {}; }catch(e){ mark = {}; }
+}
+function saveCfg(){
+  localStorage.setItem(KEY_API, JSON.stringify({api:$('api').value.trim(), key:$('key').value.trim()}));
+  $('msg').className = '';
+  $('msg').textContent = '已记住，下次打开直接拉取。';
+}
+function fmtTime(ts){
+  if (!ts) return '—';
+  var d = new Date(Number(ts));
+  if (isNaN(d.getTime())) return '—';
+  var p = function(n){ return (n<10?'0':'')+n; };
+  return (d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+function money(n){
+  var v = Number(n)||0;
+  if (!v) return '—';
+  if (v >= 10000) return '¥' + (v/10000).toFixed(1).replace(/\.0$/,'') + ' 万';
+  return '¥' + Math.round(v).toLocaleString();
+}
+function spacesText(x){
+  var sp = x.spaces || [];
+  if (sp.length){
+    var names = sp.map(function(s){ return typeof s === 'string' ? s : (s.name || ''); }).filter(Boolean);
+    if (names.length) return names.join('、');
+  }
+  return x.spaceCount ? (x.spaceCount + ' 个空间') : '—';
+}
+function typeText(x){
+  if (x.decoTypeName) return x.decoTypeName;
+  if (x.decoType === 'whole') return '整装';
+  if (x.decoType === 'partial') return '局改';
+  return '未填';
+}
+
+function render(){
+  var q = ($('q').value || '').trim().toLowerCase();
+  var view = rows.filter(function(x){
+    if (!q) return true;
+    return (String(x.phone||'') + ' ' + String(x.city||'') + ' ' + String(x.name||'')).toLowerCase().indexOf(q) >= 0;
+  });
+  var box = $('list');
+  if (!view.length){
+    box.innerHTML = '<div class="empty">' + (rows.length ? '没有匹配的客资' : '还没有客资。客户在小程序点「生成预算」并完成注册后，就会出现在这里。') + '</div>';
+    return;
+  }
+  box.innerHTML = view.map(function(x){
+    var ph = String(x.phone||'');
+    var tel = ph.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+    var hot = ph.replace(/(\d{3})(\d{4})(\d{4})/, '$1****$4');
+    var done = mark[ph] === 'done';
+    var tags = '';
+    if (x.wantRender) tags += '<span class="tag hot">预约出图' + (x.wantStyle ? ' · ' + esc(x.wantStyle) : '') + '</span>';
+    if (!done) tags += '<span class="tag new">新线索</span>';
+    tags += '<span class="tag">' + esc(typeText(x)) + '</span>';
+    if (x.area) tags += '<span class="tag">' + esc(x.area) + '㎡</span>';
+    if (x.times > 1) tags += '<span class="tag">留资 ' + esc(x.times) + ' 次</span>';
+    return '<div class="lead' + (done ? ' done' : '') + '">'
+      + '<div class="row1">'
+      +   '<span class="who">' + esc(x.name || '未留称呼') + '</span>'
+      +   '<a class="tel" href="tel:' + esc(ph) + '">' + esc(tel || hot) + '</a>'
+      +   '<span class="t">' + fmtTime(x.createdAt) + '</span>'
+      + '</div>'
+      + '<div class="meta">' + esc(x.city || '未填城市') + ' · ' + esc(typeText(x))
+      +   ' · ' + (x.area ? esc(x.area) + '㎡' : '未填面积')
+      +   ' · ' + esc(spacesText(x))
+      +   ' · 预算 <span class="money">' + money(x.budget) + '</span></div>'
+      + '<div class="tags">' + tags + '</div>'
+      + '<div class="acts">'
+      +   '<a href="tel:' + esc(ph) + '">拨打</a>'
+      +   '<button class="ghost" data-copy="' + esc(ph) + '">复制号码</button>'
+      +   '<button class="ghost" data-mark="' + esc(ph) + '">' + (done ? '标为新线索' : '标记已联系') + '</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function stats(){
+  var today = new Date(); today.setHours(0,0,0,0);
+  var t0 = today.getTime();
+  var d7 = t0 - 6*86400000;
+  var c1 = rows.length;
+  var c2 = rows.filter(function(x){ return Number(x.createdAt||0) >= t0; }).length;
+  var c3 = rows.filter(function(x){ return Number(x.createdAt||0) >= d7; }).length;
+  var c4 = rows.filter(function(x){ return !!x.wantRender; }).length;
+  $('s1').textContent = c1; $('s2').textContent = c2;
+  $('s3').textContent = c3; $('s4').textContent = c4;
+}
+
+function load(){
+  var api = $('api').value.trim().replace(/\/+$/,'');
+  var key = $('key').value.trim();
+  if (!api){ setMsg('先填服务地址', true); return; }
+  if (!key){ setMsg('先填云端口令（Render 环境变量 ADMIN_KEY 的值）', true); return; }
+  setMsg('拉取中…', false);
+  $('go').disabled = true;
+  fetch(api + '/api/leads?limit=500&key=' + encodeURIComponent(key), {cache:'no-store'})
+    .then(function(r){ return r.json().catch(function(){ return {ok:false, error:'返回不是 JSON（' + r.status + '）'}; }); })
+    .then(function(d){
+      $('go').disabled = false;
+      if (!d.ok){
+        var e = d.error || '拉取失败';
+        if (/口令/.test(e)) e = '口令不对。去 Render → 环境变量复制 ADMIN_KEY 的值填进来。';
+        else if (/未配置/.test(e)) e = '服务端没配 ADMIN_KEY，先在 Render 环境变量里加一个。';
+        setMsg(e, true);
+        return;
+      }
+      rows = (d.list || []).slice().sort(function(a,b){ return (Number(b.createdAt)||0)-(Number(a.createdAt)||0); });
+      stats(); render();
+      setMsg('云端累计 ' + (d.count != null ? d.count : rows.length) + ' 条，已拉取 ' + rows.length + ' 条。', false);
+      localStorage.setItem(KEY_API, JSON.stringify({api:api, key:key}));
+    })
+    .catch(function(err){
+      $('go').disabled = false;
+      setMsg('连不上服务：' + (err && err.message || err) + '（Render 免费实例休眠，等 30 秒再点一次）', true);
+    });
+}
+
+function setMsg(t, isErr){
+  $('msg').textContent = t;
+  $('msg').className = isErr ? 'err' : '';
+}
+
+function exportCsv(){
+  if (!rows.length){ setMsg('还没有数据可导出', true); return; }
+  var head = ['留资时间','称呼','手机号','城市','整装/局改','面积㎡','预算','空间数','空间明细','预约出图','想要风格','留资次数'];
+  var lines = [head.join(',')];
+  rows.forEach(function(x){
+    var cells = [
+      fmtTime(x.createdAt), x.name || '', x.phone || '', x.city || '', typeText(x),
+      x.area || '', Number(x.budget) || 0, x.spaceCount || '',
+      spacesText(x), x.wantRender ? '是' : '', x.wantStyle || '', x.times || 1
+    ].map(function(v){
+      var s = String(v == null ? '' : v).replace(/"/g,'""');
+      return /[",\n]/.test(s) ? '"' + s + '"' : s;
+    });
+    lines.push(cells.join(','));
+  });
+  var blob = new Blob(['\ufeff' + lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  var d = new Date();
+  var p = function(n){ return (n<10?'0':'')+n; };
+  a.href = URL.createObjectURL(blob);
+  a.download = '客资_' + d.getFullYear() + p(d.getMonth()+1) + p(d.getDate()) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+$('go').addEventListener('click', load);
+$('save').addEventListener('click', saveCfg);
+$('csv').addEventListener('click', exportCsv);
+$('q').addEventListener('input', render);
+$('del').addEventListener('click', function(){
+  mark = {};
+  localStorage.removeItem(KEY_MARK);
+  render();
+  setMsg('本机标记已清空（不影响云端数据）', false);
+});
+$('key').addEventListener('keydown', function(e){ if (e.key === 'Enter') load(); });
+$('list').addEventListener('click', function(e){
+  var t = e.target;
+  if (t.dataset && t.dataset.copy){
+    var v = t.dataset.copy;
+    if (navigator.clipboard) navigator.clipboard.writeText(v).then(function(){ setMsg('已复制 ' + v, false); });
+    else { var ta = document.createElement('textarea'); ta.value = v; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); setMsg('已复制 ' + v, false); }
+  }
+  if (t.dataset && t.dataset.mark){
+    var ph = t.dataset.mark;
+    if (mark[ph] === 'done') delete mark[ph]; else mark[ph] = 'done';
+    localStorage.setItem(KEY_MARK, JSON.stringify(mark));
+    render();
+  }
+});
+
+loadCfg();
+if ($('key').value) load();
+</script>
+</body>
+</html>

@@ -312,6 +312,24 @@ const server = http.createServer(async (req, res) => {
   // ===================== 微信支付 / 额度（v3 模块化实现）=====================
   const _u = new URL(req.url, 'http://localhost');
 
+  // 客资台页面：部署在云端，手机/电脑打开即用，不依赖本机服务
+  // 页面本身不含数据，仍需 ADMIN_KEY 才能拉到客资
+  if ((_u.pathname === '/leads' || _u.pathname === '/leads/') && req.method === 'GET') {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const html = fs.readFileSync(path.join(__dirname, 'leads.html'), 'utf8');
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'X-Frame-Options': 'SAMEORIGIN'
+      });
+      return res.end(html);
+    } catch (e) {
+      return send(res, 500, { ok: false, error: '客资台页面缺失：' + String(e && e.message || e) });
+    }
+  }
+
   // 登录换 openid：额度与订单都挂在 openid 上
   if (_u.pathname === '/api/login' && req.method === 'POST') {
     let buf = '';
